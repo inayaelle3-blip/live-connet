@@ -12,7 +12,7 @@
         .mobile-frame { width: 100%; max-width: 412px; height: 100vh; max-height: 900px; background-color: #f5f5f5; position: relative; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 25px rgba(0,0,0,0.1); }
         @media (max-width: 450px) { body { background-color: #fff; } .mobile-frame { height: 100vh; max-height: none; box-shadow: none; max-width: 100%; } }
 
-        /* --- HEADER (OLD UI - White) --- */
+        /* --- HEADER --- */
         .chat-header { background: #fff; border-bottom: 1px solid #eee; padding: 0 15px; height: 65px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; z-index: 10; }
         .chat-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 1px solid #f0f0f0; }
         .chat-info { flex-grow: 1; }
@@ -35,14 +35,18 @@
         .chat-media-content { width: 100%; max-width: 240px; display: block; border-radius: 13px; cursor: pointer; transition: transform 0.1s; }
         .chat-video-content { width: 100%; max-width: 240px; border-radius: 13px; background: #000; cursor: pointer; }
 
+        /* File Content */
+        .file-attachment { display: flex; align-items: center; gap: 10px; padding: 5px; background: rgba(0,0,0,0.05); border-radius: 6px; }
+        .file-icon { width: 34px; height: 34px; background: #f44336; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 9px; color: #fff; text-transform: uppercase; }
+        .file-name { font-size: 14px; font-weight: 500; text-decoration: none; color: #333; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
         /* --- TICKS & TIME --- */
         .msg-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; margin-left: 5px; float: right; }
         .msg-time { font-size: 10px; color: #888; }
         .tick-icon { width: 14px; height: 14px; }
         
-        /* Tick Colors */
         .tick-grey svg { fill: #999; }
-        .tick-blue svg { fill: #34B7F1; } /* Blue color for seen */
+        .tick-blue svg { fill: #34B7F1; } 
 
         /* Colors */
         .msg-sent { justify-content: flex-end; }
@@ -68,7 +72,7 @@
         .chat-send-btn:active { transform: scale(0.95); }
         .chat-send-btn svg { width: 22px; height: 22px; fill: white; }
 
-        /* --- SMOOTH VIEWER ANIMATION --- */
+        /* --- VIEWER --- */
         #mediaViewer {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: #000; z-index: 2000;
@@ -234,18 +238,15 @@
 
         sendBtn.addEventListener('click', (e) => { e.preventDefault(); sendMessage(); });
 
-        // --- RECEIVE & READ LOGIC ---
+        // --- RECEIVE LOGIC ---
         socket.on('chat message', (data) => {
             addMessage(data);
-            // Agar message mera nahi hai (Receiver hoon)
             if (data.user !== myName) {
-                // Server ko batao: "Maine message ID ... padh liya"
                 socket.emit('message read', data.id);
             }
         });
 
         socket.on('message read', (msgId) => {
-            // Apna message dhundo aur tick BLUE karo
             const tickEl = document.getElementById(`tick-${msgId}`);
             if (tickEl) {
                 tickEl.classList.remove('tick-grey');
@@ -262,6 +263,7 @@
             let contentHtml = '';
             let bubbleClass = 'bubble';
 
+            // Check Content Type
             if (data.type === 'image') {
                 contentHtml = `<img src="${data.content}" class="chat-media-content" onclick="openMedia('image', '${data.content}')">`;
                 bubbleClass += ' is-media';
@@ -271,33 +273,31 @@
             } else if (data.type === 'file') {
                 contentHtml = `<div class="file-attachment"><div class="file-icon">DOC</div><a href="${data.content}" download="${data.fileName}" class="file-name">${data.fileName}</a></div>`;
             } else {
-                contentHtml = data.text;
+                // FIXED: Use data.content instead of data.text for TEXT MESSAGES
+                contentHtml = `<div style="margin-right:20px; margin-bottom:5px;">${data.content}</div>`;
             }
 
-            // Ticks only for SENT messages
+            // Ticks Logic
             let metaHtml = '';
             if (isMe) {
                 const tickSvg = document.getElementById('icon-tick-double').innerHTML;
                 metaHtml = `<div class="msg-meta"><span class="msg-time">${data.time}</span><span id="tick-${data.id}" class="tick-icon tick-grey"><svg viewBox="0 0 16 16">${tickSvg}</svg></span></div>`;
             } else {
-                 metaHtml = `<div class="msg-meta"><span class="msg-time">${data.time}</span></div>`;
+                metaHtml = `<div class="msg-meta"><span class="msg-time">${data.time}</span></div>`;
             }
 
             let html = '';
-            // HTML Structure for Bubble Content
             if (isMe) {
-                // Sent Message (Bubble + Meta Inside)
+                // Sent
                 if(bubbleClass.includes('is-media')) {
-                    // For Media, Meta is separate or overlaid. Keeping it simple: separate line below image if needed, or overlay. 
-                    // To keep it simple in this structure, we wrap media + meta in a div if needed, but bubble approach works best for text.
-                    // For media, let's put meta inside the bubble container (which is transparent).
+                    // Overlay ticks for media
                     html = `<div class="${bubbleClass}">${contentHtml}<div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:2px 6px; position:absolute; bottom:5px; right:5px; display:flex;">${metaHtml.replace('tick-grey', 'tick-grey style="fill:white"').replace('color: #888', 'color: #fff')}</div></div><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="avatar-small">`;
                 } else {
-                    html = `<div class="${bubbleClass}"><div>${contentHtml}</div>${metaHtml}</div><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="avatar-small">`;
+                    html = `<div class="${bubbleClass}">${contentHtml}${metaHtml}</div><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="avatar-small">`;
                 }
             } else {
-                // Received Message
-                html = `<img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="avatar-small"><div class="${bubbleClass}"><div>${contentHtml}</div>${metaHtml}</div>`;
+                // Received
+                html = `<img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="avatar-small"><div class="${bubbleClass}">${contentHtml}${metaHtml}</div>`;
             }
 
             row.innerHTML = html;
