@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Payes Chat Final</title>
+    <title>Payes Chat Ultimate</title>
     
     <style>
         /* --- RESET & LAYOUT --- */
@@ -107,7 +107,7 @@
     <div class="mobile-frame">
         <div id="loadingOverlay">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#00d600" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 1s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
-            <span style="margin-top:10px;">Sending...</span>
+            <span style="margin-top:10px;">Saving & Sending...</span>
         </div>
         <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
 
@@ -122,7 +122,7 @@
 
         <div class="chat-list" id="chatList">
             <div class="date-badge">Today</div>
-            <div style="text-align:center; color:#999; font-size:12px; margin-bottom:10px;">Messages are end-to-end encrypted. No login required.</div>
+            <div style="text-align:center; color:#999; font-size:12px; margin-bottom:10px;">Messages saved to Phone Storage.</div>
         </div>
 
         <div class="footer-container">
@@ -145,8 +145,56 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // --- DATABASE SETUP (IndexedDB) ---
+        let db;
+        const request = indexedDB.open("PayesChatDB", 1);
+
+        request.onupgradeneeded = function(event) {
+            db = event.target.result;
+            // Create a store for messages, using 'id' as key
+            db.createObjectStore("messages", { keyPath: "id" });
+        };
+
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            loadMessagesFromDB(); // Load saved messages on startup
+        };
+
+        request.onerror = function(event) {
+            console.log("Database error: " + event.target.errorCode);
+        };
+
+        function saveMessageToDB(data) {
+            if(!db) return;
+            const transaction = db.transaction(["messages"], "readwrite");
+            transaction.objectStore("messages").add(data);
+        }
+
+        function loadMessagesFromDB() {
+            if(!db) return;
+            const transaction = db.transaction(["messages"], "readonly");
+            const objectStore = transaction.objectStore("messages");
+            const request = objectStore.getAll();
+
+            request.onsuccess = function(event) {
+                const messages = event.target.result;
+                messages.forEach(msg => addMessage(msg, false)); // false means don't scroll hard on load
+                // Scroll to bottom after loading all
+                setTimeout(() => {
+                    chatList.scrollTop = chatList.scrollHeight;
+                }, 100);
+            };
+        }
+
+        // --- CHAT LOGIC ---
+        // Get name from storage or create new
+        let myName = localStorage.getItem("chatUsername");
+        if(!myName) {
+            myName = "Guest " + Math.floor(Math.random() * 9000 + 1000);
+            localStorage.setItem("chatUsername", myName);
+        }
+        
         const socket = io();
-        const myName = "Guest " + Math.floor(Math.random() * 9000 + 1000);
         
         const sendBtn = document.getElementById('sendBtn');
         const input = document.getElementById('msgInput');
@@ -202,7 +250,6 @@
         }
         function removeFile(index) { selectedFiles.splice(index, 1); renderPreviews(); }
 
-        // --- SEND LOGIC ---
         async function sendMessage() {
             const text = input.value.trim();
             if (!text && selectedFiles.length === 0) return;
@@ -210,7 +257,10 @@
 
             if (text) {
                 const msgId = Date.now() + Math.random().toString(16).slice(2);
-                socket.emit('chat message', { id: msgId, user: myName, type: 'text', content: text, time: getTime() });
+                const msgData = { id: msgId, user: myName, type: 'text', content: text, time: getTime() };
+                socket.emit('chat message', msgData);
+                // Note: Server will emit back, we save then. Or we can save immediately optimistically.
+                // Let's rely on server echo to keep it synced.
                 input.value = ""; input.style.height = 'auto';
             }
 
@@ -227,7 +277,8 @@
                     if (file.type.startsWith('image/')) type = 'image';
                     if (file.type.startsWith('video/')) type = 'video';
                     const msgId = Date.now() + Math.random().toString(16).slice(2);
-                    socket.emit('chat message', { id: msgId, user: myName, type: type, content: e.target.result, fileName: file.name, time: getTime() });
+                    const msgData = { id: msgId, user: myName, type: type, content: e.target.result, fileName: file.name, time: getTime() };
+                    socket.emit('chat message', msgData);
                     resolve();
                 };
                 reader.readAsDataURL(file);
@@ -240,7 +291,12 @@
 
         // --- RECEIVE LOGIC ---
         socket.on('chat message', (data) => {
-            addMessage(data);
+            // Check if already in UI (to prevent duplicates if server sends history + we load local)
+            if (document.getElementById('row-' + data.id)) return;
+
+            addMessage(data, true);
+            saveMessageToDB(data); // Save to Phone Storage
+
             if (data.user !== myName) {
                 socket.emit('message read', data.id);
             }
@@ -254,16 +310,19 @@
             }
         });
 
-        function addMessage(data) {
+        function addMessage(data, scroll) {
+            // Prevent duplicates
+            if (document.getElementById('row-' + data.id)) return;
+
             const isMe = data.user === myName;
             const row = document.createElement('div');
+            row.id = 'row-' + data.id; // Unique ID for Row
             row.classList.add('message-row');
             row.classList.add(isMe ? 'msg-sent' : 'msg-received');
 
             let contentHtml = '';
             let bubbleClass = 'bubble';
 
-            // Check Content Type
             if (data.type === 'image') {
                 contentHtml = `<img src="${data.content}" class="chat-media-content" onclick="openMedia('image', '${data.content}')">`;
                 bubbleClass += ' is-media';
@@ -273,11 +332,9 @@
             } else if (data.type === 'file') {
                 contentHtml = `<div class="file-attachment"><div class="file-icon">DOC</div><a href="${data.content}" download="${data.fileName}" class="file-name">${data.fileName}</a></div>`;
             } else {
-                // FIXED: Use data.content instead of data.text for TEXT MESSAGES
                 contentHtml = `<div style="margin-right:20px; margin-bottom:5px;">${data.content}</div>`;
             }
 
-            // Ticks Logic
             let metaHtml = '';
             if (isMe) {
                 const tickSvg = document.getElementById('icon-tick-double').innerHTML;
@@ -288,21 +345,21 @@
 
             let html = '';
             if (isMe) {
-                // Sent
                 if(bubbleClass.includes('is-media')) {
-                    // Overlay ticks for media
                     html = `<div class="${bubbleClass}">${contentHtml}<div style="background:rgba(0,0,0,0.3); border-radius:10px; padding:2px 6px; position:absolute; bottom:5px; right:5px; display:flex;">${metaHtml.replace('tick-grey', 'tick-grey style="fill:white"').replace('color: #888', 'color: #fff')}</div></div><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="avatar-small">`;
                 } else {
                     html = `<div class="${bubbleClass}">${contentHtml}${metaHtml}</div><img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="avatar-small">`;
                 }
             } else {
-                // Received
                 html = `<img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="avatar-small"><div class="${bubbleClass}">${contentHtml}${metaHtml}</div>`;
             }
 
             row.innerHTML = html;
             chatList.appendChild(row);
-            chatList.scrollTop = chatList.scrollHeight;
+            
+            if(scroll) {
+                chatList.scrollTop = chatList.scrollHeight;
+            }
         }
 
         // --- SMOOTH VIEWER ANIMATION ---
@@ -325,4 +382,3 @@
     </script>
 </body>
 </html>
-
