@@ -1,22 +1,36 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Payes Real Chat</title>
+    <title>Payes Chat Final</title>
     <style>
-        /* --- CSS WAHI SAME HAI (NO CHANGE) --- */
+        /* --- 1. SETUP & LAYOUT --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: #1e1e1e; height: 100vh; display: flex; justify-content: center; overflow: hidden; }
-        .mobile-frame { width: 100%; max-width: 450px; height: 100%; background-color: #222; background-image: url('https://images.unsplash.com/photo-1623164326546-24df97b97637?q=80&w=1000&auto=format&fit=crop'); background-size: cover; background-position: center; background-repeat: no-repeat; display: flex; flex-direction: column; position: relative; }
-        .header { background-color: #517DA2; height: 55px; padding: 0 10px; display: flex; align-items: center; gap: 10px; color: white; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; position: relative; }
+
+        .mobile-frame { 
+            width: 100%; max-width: 450px; height: 100%; 
+            background-color: #222; 
+            /* NEW WALLPAPER ADDED HERE */
+            background-image: url('https://images.pexels.com/photos/15036815/pexels-photo-15036815.jpeg'); 
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            display: flex; flex-direction: column; position: relative; 
+        }
+
+        /* --- 2. HEADER --- */
+        .header {
+            background-color: #517DA2; height: 55px; padding: 0 10px; display: flex; align-items: center; gap: 10px;
+            color: white; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; position: relative;
+        }
         .back-btn { width: 24px; height: 24px; fill: white; cursor: pointer; }
         .profile-pic { width: 38px; height: 38px; border-radius: 50%; background: #333; object-fit: cover; }
         .user-info { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
         .user-name { font-weight: 600; font-size: 16px; }
         .user-status { font-size: 12px; opacity: 0.8; }
         .header-icon { width: 24px; height: 24px; fill: white; cursor: pointer; margin-left: 10px; padding: 2px; border-radius: 50%; }
+
+        /* Menu */
         .settings-menu { position: absolute; top: 50px; right: 10px; width: 200px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: none; flex-direction: column; overflow: hidden; z-index: 30; transform-origin: top right; animation: menuPop 0.2s ease-out; }
         .settings-menu.active { display: flex; }
         @keyframes menuPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -24,10 +38,16 @@
         .setting-item:active { background: #f5f5f5; }
         .setting-item.delete { color: #FF3B30; }
         .setting-item svg { width: 20px; height: 20px; fill: currentColor; }
-        .chat-list { flex-grow: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; scroll-behavior: smooth; padding-bottom: 20px; }
+
+        /* --- 3. CHAT LIST --- */
+        .chat-list {
+            flex-grow: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px;
+            scroll-behavior: smooth; padding-bottom: 20px;
+        }
         .date-label { align-self: center; background: rgba(0,0,0,0.3); color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin: 10px 0; }
+
+        /* --- 4. BUBBLES --- */
         .message-row { display: flex; width: 100%; margin-bottom: 12px; position: relative; animation: msgSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-origin: bottom; transition: all 0.3s ease-out; opacity: 1; flex-shrink: 0; } 
-        .message-row.deleting { opacity: 0; max-height: 0; margin-bottom: 0; padding: 0; transform: scale(0.5); overflow: hidden; }
         @keyframes msgSlideUp { 0% { opacity: 0; transform: translateY(20px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
         .bubble { max-width: 80%; padding: 6px 10px; border-radius: 8px; font-size: 16px; line-height: 1.3; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; cursor: pointer; transition: transform 0.1s; }
         .bubble:active { transform: scale(0.98); }
@@ -42,13 +62,36 @@
         .reaction-badge { position: absolute; bottom: -12px; z-index: 5; background: white; border: 1px solid #e0e0e0; padding: 2px 5px; border-radius: 10px; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .msg-sent .reaction-badge { right: 10px; }
         .msg-received .reaction-badge { left: 10px; }
+
+        /* Audio Player */
         .audio-player { display: flex; align-items: center; gap: 10px; width: 230px; padding: 5px 0; }
         .play-icon { width: 40px; height: 40px; background: #539CDE; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .play-icon svg { fill: white; width: 20px; height: 20px; margin-left: 2px; }
-        .play-icon.playing svg { margin-left: 0; }
         .audio-track { flex-grow: 1; height: 3px; background: rgba(0,0,0,0.1); position: relative; border-radius: 5px; overflow: hidden; }
         .audio-progress { width: 0%; height: 100%; background: #539CDE; border-radius: 5px; transition: width 0.1s linear; }
-        .chat-footer { padding: 5px 8px; display: flex; align-items: flex-end; gap: 8px; min-height: 50px; margin-bottom: 5px; flex-shrink: 0; background: transparent; }
+
+        /* --- 5. FOOTER & PREVIEW --- */
+        .footer-container { background: transparent; display: flex; flex-direction: column; }
+
+        /* PREVIEW AREA (Updated) */
+        .preview-scroll-area {
+            display: none; 
+            padding: 10px; 
+            background: rgba(240, 242, 245, 0.95); /* Slightly transparent background */
+            border-top: 1px solid rgba(0,0,0,0.1);
+            overflow-x: auto; white-space: nowrap; gap: 10px;
+            backdrop-filter: blur(5px);
+        }
+        .preview-item { display: inline-block; position: relative; width: 60px; height: 60px; margin-right: 10px; border-radius: 8px; overflow: hidden; border: 2px solid #517DA2; background: #fff; vertical-align: top; }
+        .preview-thumb { width: 100%; height: 100%; object-fit: cover; }
+        .preview-remove { position: absolute; top: 0; right: 0; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 20px; height: 20px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        .chat-footer {
+            padding: 5px 8px; display: flex; align-items: flex-end; gap: 8px; 
+            min-height: 50px; margin-bottom: 14px; /* 9px increased gap here (5 + 9 = 14) */
+            flex-shrink: 0; background: transparent; 
+        }
+        
         .input-container { flex-grow: 1; background: #FFFFFF; border-radius: 22px; display: flex; align-items: flex-end; padding: 8px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .chat-input { flex-grow: 1; border: none; outline: none; font-size: 17px; max-height: 120px; overflow-y: auto; resize: none; padding: 0 8px; margin-bottom: 2px; font-family: "Roboto", sans-serif; background: transparent; }
         .recording-ui { flex-grow: 1; background: #FFFFFF; border-radius: 22px; display: flex; align-items: center; padding: 12px 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); animation: slideInRight 0.2s; }
@@ -56,12 +99,15 @@
         .rec-dot { width: 10px; height: 10px; background-color: #FF3B30; border-radius: 50%; margin-right: 10px; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0; } }
         #recTimer { font-size: 17px; font-weight: 500; color: #333; min-width: 50px; }
-        .cancel-rec { color: #FF3B30; font-weight: 600; cursor: pointer; font-size: 15px; margin-left: auto; text-transform: uppercase; letter-spacing: 0.5px; }
+        .cancel-rec { color: #FF3B30; font-weight: 600; cursor: pointer; font-size: 15px; margin-left: auto; text-transform: uppercase; }
+        
         .icon-btn { width: 26px; height: 26px; fill: #89939B; cursor: pointer; flex-shrink: 0; margin-bottom: 1px; }
         .action-btn-wrapper { width: 42px; height: 42px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .mic-btn, .send-btn { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .mic-btn { background: #FFFFFF; } .mic-btn svg { width: 22px; height: 22px; fill: #89939B; }
         .send-btn { background: #539CDE; display: none; } .send-btn svg { width: 20px; height: 20px; fill: #FFFFFF; margin-left: 2px; margin-top: 2px; }
+
+        /* Overlays */
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); z-index: 100; display: none; flex-direction: column; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.2s; }
         .overlay.active { display: flex; opacity: 1; }
         .action-menu-container { width: 250px; background: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transform: scale(0.9); transition: transform 0.2s; display: flex; flex-direction: column; margin-bottom: 50px; }
@@ -72,11 +118,13 @@
         .menu-icon { width: 24px; height: 24px; margin-right: 18px; fill: #333; }
         .menu-item.delete { color: #FF3B30; } .menu-item.delete .menu-icon { fill: #FF3B30; width: 20px; height: 20px; }
         #downloadOption { display: none; }
+        
         .emoji-picker-container { width: 100%; max-width: 380px; height: 50%; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); display: flex; flex-direction: column; transform: translateY(20px); transition: transform 0.2s; align-self: center; }
         .overlay.active .emoji-picker-container { transform: translateY(0); }
         .emoji-grid { flex-grow: 1; overflow-y: auto; padding: 10px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; align-content: start; }
         .emoji-item { font-size: 28px; text-align: center; cursor: pointer; padding: 5px; border-radius: 5px; }
         .emoji-item:active { background: #f0f0f0; transform: scale(1.2); }
+        
         .media-viewer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 200; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s; }
         .media-viewer.active { display: flex; opacity: 1; }
         .media-viewer img, .media-viewer video { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -88,17 +136,16 @@
 
     <div class="mobile-frame" id="chatFrame">
         
-        <div id="loadingOverlay">Sending...</div>
+        <div id="loadingOverlay">Processing...</div>
 
         <!-- HEADER -->
         <div class="header">
             <svg class="back-btn" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
             <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" class="profile-pic">
             <div class="user-info">
-                <div class="user-name">alex</div>
+                <div class="user-name">Cobb</div>
                 <div class="user-status" id="connectionStatus">Connecting...</div>
             </div>
-            
             <svg class="header-icon" id="threeDotsBtn" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
             
             <div class="settings-menu" id="settingsMenu">
@@ -114,36 +161,40 @@
             <div class="date-label">Today</div>
         </div>
 
-        <!-- FOOTER -->
-        <div class="chat-footer">
-            <!-- Text Input -->
-            <div class="input-container" id="inputUI">
-                <svg class="icon-btn" style="margin-right: 5px;" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
-                <textarea id="msgInput" class="chat-input" placeholder="Message" rows="1"></textarea>
-                <svg id="attachBtn" class="icon-btn" style="margin-left: 5px; transform: rotate(45deg);" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
-                <input type="file" id="fileInput" style="display: none;" accept="image/*,video/*">
-            </div>
+        <!-- FOOTER CONTAINER -->
+        <div class="footer-container">
+            <!-- Hidden Input -->
+            <input type="file" id="fileInput" multiple style="display: none;">
+            
+            <!-- PREVIEW AREA (NEW) -->
+            <div class="preview-scroll-area" id="previewArea"></div>
 
-            <!-- Recording UI -->
-            <div class="recording-ui" id="recordingUI" style="display: none;">
-                <div class="rec-dot"></div>
-                <span id="recTimer">0:00</span>
-                <div class="cancel-rec" onclick="cancelRecording()">Cancel</div>
-            </div>
-
-            <!-- Buttons -->
-            <div class="action-btn-wrapper" id="actionBtn">
-                <div class="mic-btn" id="micBtn">
-                    <svg id="micIcon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
-                    <svg id="recSendIcon" style="display:none; fill:#539CDE; width:24px; height:24px;" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            <div class="chat-footer">
+                <div class="input-container" id="inputUI">
+                    <svg class="icon-btn" style="margin-right: 5px;" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+                    <textarea id="msgInput" class="chat-input" placeholder="Message" rows="1"></textarea>
+                    <svg id="attachBtn" class="icon-btn" style="margin-left: 5px; transform: rotate(45deg);" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
                 </div>
-                <div class="send-btn" id="sendBtn">
-                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+
+                <div class="recording-ui" id="recordingUI" style="display: none;">
+                    <div class="rec-dot"></div>
+                    <span id="recTimer">0:00</span>
+                    <div class="cancel-rec" onclick="cancelRecording()">Cancel</div>
+                </div>
+
+                <div class="action-btn-wrapper" id="actionBtn">
+                    <div class="mic-btn" id="micBtn">
+                        <svg id="micIcon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+                        <svg id="recSendIcon" style="display:none; fill:#539CDE; width:24px; height:24px;" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </div>
+                    <div class="send-btn" id="sendBtn">
+                        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Overlays -->
+        <!-- OVERLAYS -->
         <div class="overlay" id="actionOverlay">
             <div class="action-menu-container">
                 <div class="menu-item" onclick="handleMenuAction('reply')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>Reply</div></div>
@@ -152,24 +203,21 @@
                 <div class="menu-item delete" onclick="handleMenuAction('delete')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Delete</div></div>
             </div>
         </div>
-        
         <div class="overlay" id="emojiOverlay" style="justify-content: center;">
             <div class="emoji-picker-container"><div class="emoji-grid" id="emojiGrid"></div></div>
         </div>
-
         <div class="media-viewer" id="mediaViewer">
             <div class="close-viewer" onclick="closeMediaViewer()"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
             <img id="viewerImage" src="" style="display:none;"><video id="viewerVideo" src="" controls style="display:none;"></video>
         </div>
     </div>
 
-    <!-- SOCKET.IO -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        const myName = "User" + Math.floor(Math.random() * 9000); // Random User ID
+        const myName = "User" + Math.floor(Math.random() * 9000);
 
-        // --- DOM Elements ---
+        // Elements
         const input = document.getElementById('msgInput');
         const micBtn = document.getElementById('micBtn');
         const sendBtn = document.getElementById('sendBtn');
@@ -183,67 +231,177 @@
         const micIcon = document.getElementById('micIcon');
         const recSendIcon = document.getElementById('recSendIcon');
         const loadingOverlay = document.getElementById('loadingOverlay');
+        const mediaViewer = document.getElementById('mediaViewer');
+        const settingsMenu = document.getElementById('settingsMenu');
+        const threeDotsBtn = document.getElementById('threeDotsBtn');
+        const bgInput = document.getElementById('bgInput');
+        const chatFrame = document.getElementById('chatFrame');
+        const previewArea = document.getElementById('previewArea');
+        const actionOverlay = document.getElementById('actionOverlay');
+        const emojiOverlay = document.getElementById('emojiOverlay');
+        const emojiGrid = document.getElementById('emojiGrid');
+        const downloadOption = document.getElementById('downloadOption');
+        let activeMessageRow = null; 
+        const defaultBg = "https://images.pexels.com/photos/15036815/pexels-photo-15036815.jpeg";
 
-        // Connection Status
         socket.on('connect', () => { document.getElementById('connectionStatus').innerText = "Online"; });
         socket.on('disconnect', () => { document.getElementById('connectionStatus').innerText = "Connecting..."; });
 
-        // --- 1. SEND MESSAGE LOGIC ---
+        // --- 1. FILE SELECTION LOGIC ---
+        let selectedFiles = [];
+
+        attachBtn.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                Array.from(this.files).forEach(file => {
+                    selectedFiles.push(file);
+                });
+                renderPreviews();
+                // Reset value to allow selecting same file again
+                this.value = '';
+            }
+        });
+
+        function renderPreviews() {
+            previewArea.innerHTML = '';
+            
+            if (selectedFiles.length > 0) {
+                previewArea.style.display = 'block';
+                // Show Send Button
+                micBtn.style.display = 'none';
+                sendBtn.style.display = 'flex';
+                
+                selectedFiles.forEach((file, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'preview-item';
+                    
+                    if (file.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(file);
+                        img.className = 'preview-thumb';
+                        item.appendChild(img);
+                    } else {
+                        // Video or other file placeholder
+                        const icon = document.createElement('div');
+                        icon.style.cssText = "width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#eee; font-size:10px; font-weight:bold; color:#555;";
+                        icon.innerText = file.type.split('/')[0].toUpperCase();
+                        item.appendChild(icon);
+                    }
+
+                    // Remove Button
+                    const btn = document.createElement('div');
+                    btn.className = 'preview-remove';
+                    btn.innerHTML = '×';
+                    btn.onclick = () => removeFile(index);
+                    item.appendChild(btn);
+
+                    previewArea.appendChild(item);
+                });
+            } else {
+                previewArea.style.display = 'none';
+                // Reset buttons if text is also empty
+                if(input.value.trim().length === 0) {
+                    micBtn.style.display = 'flex';
+                    sendBtn.style.display = 'none';
+                }
+            }
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderPreviews();
+        }
+
+        // --- 2. SENDING LOGIC (ASYNC) ---
+        async function sendAll() {
+            const text = input.value.trim();
+            
+            // If nothing to send, return
+            if (!text && selectedFiles.length === 0) return;
+
+            // Show Send Button Logic handled by UI toggles, but here we process
+            
+            // Send Text
+            if (text) {
+                sendPayload('text', text);
+                input.value = '';
+                input.style.height = 'auto';
+            }
+
+            // Send Files (Sequentially)
+            if (selectedFiles.length > 0) {
+                loadingOverlay.style.display = 'flex';
+                
+                for (const file of selectedFiles) {
+                    await readFileAndSend(file);
+                }
+                
+                // Cleanup
+                selectedFiles = [];
+                renderPreviews();
+                loadingOverlay.style.display = 'none';
+            }
+            
+            // Reset Button State
+            micBtn.style.display = 'flex';
+            sendBtn.style.display = 'none';
+            input.focus();
+        }
+
+        function readFileAndSend(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const type = file.type.startsWith('video') ? 'video' : 'image';
+                    sendPayload(type, e.target.result);
+                    resolve(); // Resolve promise after sending
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
         function sendPayload(type, content) {
             const msg = {
                 id: Date.now() + Math.random().toString(16),
                 user: myName,
                 type: type,
-                content: content, // Text or Base64
+                content: content,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
             socket.emit('chat message', msg);
         }
 
-        // --- 2. INPUT EVENTS ---
+        // --- 3. INPUT HANDLERS ---
         input.addEventListener('input', function() {
             this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';
-            if (this.value.trim().length > 0) { micBtn.style.display = 'none'; sendBtn.style.display = 'flex'; }
-            else { micBtn.style.display = 'flex'; sendBtn.style.display = 'none'; }
+            // Toggle buttons based on text OR files
+            if (this.value.trim().length > 0 || selectedFiles.length > 0) { 
+                micBtn.style.display = 'none'; sendBtn.style.display = 'flex'; 
+            } else { 
+                micBtn.style.display = 'flex'; sendBtn.style.display = 'none'; 
+            }
         });
 
-        // Text Send
+        // Action Button Click
         actionBtn.addEventListener('click', function(e) {
-            if (e.target.closest('#micBtn')) return; // Mic logic handled separately
-            const text = input.value.trim();
-            if (sendBtn.style.display === 'flex' && text.length > 0) {
-                sendPayload('text', text);
-                input.value = ''; input.style.height = 'auto';
-                micBtn.style.display = 'flex'; sendBtn.style.display = 'none'; input.focus();
+            // If Mic is visible, don't trigger send logic (Mic logic is separate)
+            if (micBtn.style.display !== 'none' && !isRecording) {
+                // Recording logic triggers via micBtn click listener below
+                return; 
+            }
+            
+            // If Send button is visible
+            if (sendBtn.style.display !== 'none') {
+                sendAll();
             }
         });
 
-        // File Send (Image/Video)
-        attachBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', function() {
-            if (this.files[0]) {
-                const file = this.files[0];
-                loadingOverlay.style.display = 'flex'; // Show loading for big files
-                
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const type = file.type.startsWith('video') ? 'video' : 'image';
-                    sendPayload(type, e.target.result);
-                    loadingOverlay.style.display = 'none';
-                };
-                reader.readAsDataURL(file);
-                this.value = '';
-            }
-        });
+        // --- 4. AUDIO REC ---
+        let mediaRecorder, audioChunks = [], isRecording = false, recStartTime, recInterval, shouldSendRec = false;
 
-        // --- 3. AUDIO RECORDING ---
-        let mediaRecorder;
-        let audioChunks = [];
-        let isRecording = false;
-        let recStartTime, recInterval;
-        let shouldSend = false;
-
-        micBtn.addEventListener('click', async () => {
+        micBtn.addEventListener('click', async (e) => {
+            e.stopPropagation(); // Prevent bubbling
             if (!isRecording) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -258,10 +416,8 @@
             isRecording = true;
             mediaRecorder = new MediaRecorder(stream);
             audioChunks = [];
-
             inputUI.style.display = 'none'; recordingUI.style.display = 'flex';
             micIcon.style.display = 'none'; recSendIcon.style.display = 'block';
-
             recStartTime = Date.now();
             recInterval = setInterval(() => {
                 const elapsed = Math.floor((Date.now() - recStartTime) / 1000);
@@ -269,13 +425,11 @@
                 const sec = elapsed % 60;
                 recTimer.innerText = `${min}:${sec < 10 ? '0'+sec : sec}`;
             }, 1000);
-
             mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
             mediaRecorder.onstop = () => {
                 stream.getTracks().forEach(track => track.stop());
                 resetRecUI();
-                
-                if (shouldSend) {
+                if (shouldSendRec) {
                     loadingOverlay.style.display = 'flex';
                     const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
                     const reader = new FileReader();
@@ -291,7 +445,7 @@
 
         function stopRecording(send) {
             if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
-            shouldSend = send;
+            shouldSendRec = send;
             mediaRecorder.stop();
             clearInterval(recInterval);
         }
@@ -303,84 +457,72 @@
             recTimer.innerText = "0:00";
         }
 
-        // --- 4. RECEIVE & RENDER ---
+        // --- 5. RENDER ---
         socket.on('chat message', (data) => {
             addMessage(data);
         });
 
         function addMessage(data) {
-            // Prevent duplicate by ID (simple check)
             if(document.getElementById(data.id)) return;
-
             const div = document.createElement('div');
             div.id = data.id;
             const isMe = data.user === myName;
             div.className = `message-row ${isMe ? 'msg-sent' : 'msg-received'}`;
             div.dataset.type = data.type; div.dataset.content = data.content; 
 
-            // Only time, no ticks
-            const time = data.time;
-            
             let innerHTML = '';
             if (data.type === 'text') {
-                innerHTML = `<div class="bubble">${data.content}<div class="msg-time">${time}</div></div>`;
+                innerHTML = `<div class="bubble">${data.content}<div class="msg-time">${data.time}</div></div>`;
             } else if (data.type === 'image') {
-                innerHTML = `<div class="bubble has-media" style="background:${isMe?'#EEFFDE':'#FFF'}"><img src="${data.content}" class="chat-media"><div class="time-overlay" style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.4); color:white; padding:2px 6px; border-radius:10px; font-size:11px;">${time}</div></div>`;
+                innerHTML = `<div class="bubble has-media" style="background:${isMe?'#EEFFDE':'#FFF'}"><img src="${data.content}" class="chat-media" onclick="openFullView(this.src, 'image')"><div class="time-overlay" style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.4); color:white; padding:2px 6px; border-radius:10px; font-size:11px;">${data.time}</div></div>`;
             } else if (data.type === 'video') {
-                innerHTML = `<div class="bubble has-media" style="background:${isMe?'#EEFFDE':'#FFF'}"><video src="${data.content}" class="chat-media"></video><div class="time-overlay" style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.4); color:white; padding:2px 6px; border-radius:10px; font-size:11px;">${time}</div></div>`;
+                innerHTML = `<div class="bubble has-media" style="background:${isMe?'#EEFFDE':'#FFF'}"><video src="${data.content}" class="chat-media" onclick="openFullView('${data.content}', 'video')"></video><div class="time-overlay" style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.4); color:white; padding:2px 6px; border-radius:10px; font-size:11px;">${data.time}</div></div>`;
             } else if (data.type === 'audio') {
                 const audioId = 'audio_' + data.id;
-                innerHTML = `<div class="bubble"><div class="audio-player"><div class="play-icon" onclick="playAudio('${audioId}', this)"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><div class="audio-track"><div class="audio-progress" id="prog_${audioId}"></div></div><audio id="${audioId}" src="${data.content}" ontimeupdate="updateAudioProgress('${audioId}')" onended="resetAudioIcon(this)"></audio></div><div class="msg-time" style="margin-top:2px;">${time}</div></div>`;
+                innerHTML = `<div class="bubble"><div class="audio-player"><div class="play-icon" onclick="playAudio('${audioId}', this)"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><div class="audio-track"><div class="audio-progress" id="prog_${audioId}"></div></div><audio id="${audioId}" src="${data.content}" ontimeupdate="updateAudioProgress('${audioId}')" onended="resetAudioIcon(this)"></audio></div><div class="msg-time" style="margin-top:2px;">${data.time}</div></div>`;
             }
 
             div.innerHTML = innerHTML;
             chatList.appendChild(div);
-            chatList.scrollTop = chatList.scrollHeight; 
-            
+            chatList.scrollTop = chatList.scrollHeight;
             const bubble = div.querySelector('.bubble');
             attachEvents(bubble, div, data.type, data.content);
         }
 
-        // --- 5. AUDIO PLAYER ---
+        // --- HELPERS ---
         function playAudio(id, btn) {
             const audio = document.getElementById(id);
             const icon = btn.querySelector('svg');
             document.querySelectorAll('audio').forEach(a => { if(a !== audio) { a.pause(); resetAudioIcon(a); } });
-            if (audio.paused) { audio.play(); icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; btn.classList.add('playing'); }
-            else { audio.pause(); icon.innerHTML = '<path d="M8 5v14l11-7z"/>'; btn.classList.remove('playing'); }
+            if (audio.paused) { audio.play(); icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; btn.style.background='#539CDE'; }
+            else { audio.pause(); icon.innerHTML = '<path d="M8 5v14l11-7z"/>'; }
         }
         function resetAudioIcon(audio) {
             const btn = audio.parentElement.querySelector('.play-icon');
             btn.querySelector('svg').innerHTML = '<path d="M8 5v14l11-7z"/>';
-            btn.classList.remove('playing');
             document.getElementById('prog_' + audio.id).style.width = '0%';
         }
         function updateAudioProgress(id) {
             const audio = document.getElementById(id);
             if(audio.duration) document.getElementById('prog_' + id).style.width = (audio.currentTime / audio.duration) * 100 + '%';
         }
+        function openFullView(src, type) {
+            const i=document.getElementById('viewerImage'), v=document.getElementById('viewerVideo');
+            if(type==='image'){i.src=src;i.style.display='block';v.style.display='none';}
+            else{v.src=src;v.style.display='block';i.style.display='none'; v.play();}
+            mediaViewer.classList.add('active');
+        }
+        function closeMediaViewer() { mediaViewer.classList.remove('active'); document.getElementById('viewerVideo').pause(); }
 
-        // --- 6. UI HELPERS (Menu, Viewer, Events) ---
-        const settingsMenu = document.getElementById('settingsMenu');
-        const threeDotsBtn = document.getElementById('threeDotsBtn');
-        const bgInput = document.getElementById('bgInput');
-        const chatFrame = document.getElementById('chatFrame');
-        const actionOverlay = document.getElementById('actionOverlay');
-        const emojiOverlay = document.getElementById('emojiOverlay');
-        const mediaViewer = document.getElementById('mediaViewer');
-        const emojiGrid = document.getElementById('emojiGrid');
-        const downloadOption = document.getElementById('downloadOption');
-        let activeMessageRow = null; 
-        const defaultBg = "https://images.unsplash.com/photo-1623164326546-24df97b97637?q=80&w=1000&auto=format&fit=crop";
-
+        // --- MENU ---
         threeDotsBtn.addEventListener('click', (e) => { e.stopPropagation(); settingsMenu.classList.toggle('active'); });
         document.addEventListener('click', (e) => { if (!settingsMenu.contains(e.target) && e.target !== threeDotsBtn) settingsMenu.classList.remove('active'); });
-        
         document.getElementById('btnChangeBg').addEventListener('click', () => { document.getElementById('bgInput').click(); settingsMenu.classList.remove('active'); });
         document.getElementById('bgInput').addEventListener('change', function() { if (this.files[0]) chatFrame.style.backgroundImage = `url('${URL.createObjectURL(this.files[0])}')`; });
         document.getElementById('btnResetBg').addEventListener('click', () => { chatFrame.style.backgroundImage = `url('${defaultBg}')`; settingsMenu.classList.remove('active'); });
         document.getElementById('btnClearChat').addEventListener('click', () => { chatList.innerHTML = '<div class="date-label">Today</div>'; settingsMenu.classList.remove('active'); });
 
+        // --- MENU EVENTS ---
         function attachEvents(el, row, type, content) {
             let timer, isScrolling = false;
             const start = () => { isScrolling=false; timer=setTimeout(()=>{ if(!isScrolling) openActionMenu(row); },500); };
@@ -418,16 +560,8 @@
             let b = row.querySelector('.reaction-badge'); if(b) b.remove();
             const n = document.createElement('div'); n.className='reaction-badge'; n.innerText=emoji; row.appendChild(n);
         }
-        function openMediaViewer(src, type) {
-            const i=document.getElementById('viewerImage'), v=document.getElementById('viewerVideo');
-            if(type==='image'){i.src=src;i.style.display='block';v.style.display='none';}
-            else{v.src=src;v.style.display='block';i.style.display='none';}
-            mediaViewer.classList.add('active');
-        }
-        function closeMediaViewer() { mediaViewer.classList.remove('active'); document.getElementById('viewerVideo').pause(); }
         function closeAllOverlays() { actionOverlay.classList.remove('active'); emojiOverlay.classList.remove('active'); activeMessageRow = null; }
         [actionOverlay, emojiOverlay].forEach(o => o.addEventListener('click', e => { if (e.target === o) closeAllOverlays(); }));
     </script>
 </body>
 </html>
-
