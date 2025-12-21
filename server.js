@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
-    maxHttpBufferSize: 100 * 1024 * 1024, // 100MB Limit (For Big Videos/Images)
+    maxHttpBufferSize: 100 * 1024 * 1024, // 100MB Limit for Videos
     cors: { origin: "*" }
 });
 
@@ -12,11 +12,11 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-// Temporary Memory (RAM) - Refresh karne par chat rahegi
+// Temporary Chat History
 let chatHistory = [];
 
 io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
+    console.log('User connected:', socket.id);
 
     // 1. Send History to new user
     chatHistory.forEach((msg) => {
@@ -25,12 +25,17 @@ io.on('connection', (socket) => {
 
     // 2. Handle New Messages
     socket.on('chat message', (data) => {
-        // Save to RAM
         chatHistory.push(data);
-        if (chatHistory.length > 100) chatHistory.shift(); // Keep last 100 messages
-
-        // Broadcast to EVERYONE (including sender, to confirm receipt)
+        if (chatHistory.length > 200) chatHistory.shift(); // Keep last 200 messages
         io.emit('chat message', data);
+    });
+
+    // 3. Handle Delete for Everyone
+    socket.on('delete message', (msgId) => {
+        // Remove from server history
+        chatHistory = chatHistory.filter(msg => msg.id !== msgId);
+        // Tell everyone to remove this message
+        io.emit('message deleted', msgId);
     });
 
     socket.on('disconnect', () => {
