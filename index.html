@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Payes Chat Final</title>
+    <title>Payes Telegram Real</title>
     <style>
         /* --- 1. SETUP & LAYOUT --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -12,8 +13,7 @@
         .mobile-frame { 
             width: 100%; max-width: 450px; height: 100%; 
             background-color: #222; 
-            /* NEW WALLPAPER ADDED HERE */
-            background-image: url('https://images.pexels.com/photos/15036815/pexels-photo-15036815.jpeg'); 
+            background-image: url('https://images.unsplash.com/photo-1623164326546-24df97b97637?q=80&w=1000&auto=format&fit=crop'); 
             background-size: cover; background-position: center; background-repeat: no-repeat;
             display: flex; flex-direction: column; position: relative; 
         }
@@ -52,16 +52,24 @@
         .bubble { max-width: 80%; padding: 6px 10px; border-radius: 8px; font-size: 16px; line-height: 1.3; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; cursor: pointer; transition: transform 0.1s; }
         .bubble:active { transform: scale(0.98); }
         .bubble.has-media { padding: 3px; border-radius: 8px; background: transparent; }
-        .chat-media { width: 100%; border-radius: 6px; display: block; max-width: 280px; pointer-events: none; }
+        
         .msg-sent { justify-content: flex-end; }
         .msg-sent .bubble { background-color: #EEFFDE; color: #000; border-bottom-right-radius: 0; }
         .msg-received { justify-content: flex-start; }
         .msg-received .bubble { background-color: #FFFFFF; color: #000; border-bottom-left-radius: 0; }
         .msg-time { float: right; font-size: 11px; color: #559C43; margin-top: 6px; margin-left: 8px; display: flex; align-items: center; gap: 2px; }
         .msg-received .msg-time { color: #a0a0a0; }
-        .reaction-badge { position: absolute; bottom: -12px; z-index: 5; background: white; border: 1px solid #e0e0e0; padding: 2px 5px; border-radius: 10px; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .msg-sent .reaction-badge { right: 10px; }
-        .msg-received .reaction-badge { left: 10px; }
+
+        /* MEDIA CONTAINER (Download Logic) */
+        .media-container { position: relative; width: 260px; height: 260px; background: #ddd; border-radius: 6px; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        .chat-media { width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s; }
+        .chat-media.blur { filter: blur(8px); transform: scale(1.1); }
+        
+        .download-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; z-index: 10; transition: opacity 0.3s; }
+        .download-pill { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; padding: 8px 16px; border-radius: 20px; display: flex; align-items: center; gap: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
+        .download-pill:active { transform: scale(0.95); }
+        .media-loader { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
         /* Audio Player */
         .audio-player { display: flex; align-items: center; gap: 10px; width: 230px; padding: 5px 0; }
@@ -72,26 +80,12 @@
 
         /* --- 5. FOOTER & PREVIEW --- */
         .footer-container { background: transparent; display: flex; flex-direction: column; }
-
-        /* PREVIEW AREA (Updated) */
-        .preview-scroll-area {
-            display: none; 
-            padding: 10px; 
-            background: rgba(240, 242, 245, 0.95); /* Slightly transparent background */
-            border-top: 1px solid rgba(0,0,0,0.1);
-            overflow-x: auto; white-space: nowrap; gap: 10px;
-            backdrop-filter: blur(5px);
-        }
+        .preview-scroll-area { display: none; padding: 10px; background: rgba(240, 242, 245, 0.95); border-top: 1px solid rgba(0,0,0,0.1); overflow-x: auto; white-space: nowrap; gap: 10px; backdrop-filter: blur(5px); }
         .preview-item { display: inline-block; position: relative; width: 60px; height: 60px; margin-right: 10px; border-radius: 8px; overflow: hidden; border: 2px solid #517DA2; background: #fff; vertical-align: top; }
         .preview-thumb { width: 100%; height: 100%; object-fit: cover; }
         .preview-remove { position: absolute; top: 0; right: 0; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 20px; height: 20px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         
-        .chat-footer {
-            padding: 5px 8px; display: flex; align-items: flex-end; gap: 8px; 
-            min-height: 50px; margin-bottom: 14px; /* 9px increased gap here (5 + 9 = 14) */
-            flex-shrink: 0; background: transparent; 
-        }
-        
+        .chat-footer { padding: 5px 8px; display: flex; align-items: flex-end; gap: 8px; min-height: 50px; margin-bottom: 14px; flex-shrink: 0; background: transparent; }
         .input-container { flex-grow: 1; background: #FFFFFF; border-radius: 22px; display: flex; align-items: flex-end; padding: 8px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .chat-input { flex-grow: 1; border: none; outline: none; font-size: 17px; max-height: 120px; overflow-y: auto; resize: none; padding: 0 8px; margin-bottom: 2px; font-family: "Roboto", sans-serif; background: transparent; }
         .recording-ui { flex-grow: 1; background: #FFFFFF; border-radius: 22px; display: flex; align-items: center; padding: 12px 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); animation: slideInRight 0.2s; }
@@ -129,14 +123,14 @@
         .media-viewer.active { display: flex; opacity: 1; }
         .media-viewer img, .media-viewer video { max-width: 100%; max-height: 100%; object-fit: contain; }
         .close-viewer { position: absolute; top: 15px; left: 15px; width: 35px; height: 35px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; fill: white; }
-        #loadingOverlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index: 50; align-items: center; justify-content: center; flex-direction: column; color: #539CDE; font-weight: bold; }
+        #loadingOverlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index: 300; align-items: center; justify-content: center; flex-direction: column; color: white; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="mobile-frame" id="chatFrame">
         
-        <div id="loadingOverlay">Processing...</div>
+        <div id="loadingOverlay"><div class="media-loader" style="display:block; width:30px; height:30px; margin-bottom:10px;"></div>Sending...</div>
 
         <!-- HEADER -->
         <div class="header">
@@ -166,7 +160,7 @@
             <!-- Hidden Input -->
             <input type="file" id="fileInput" multiple style="display: none;">
             
-            <!-- PREVIEW AREA (NEW) -->
+            <!-- PREVIEW AREA -->
             <div class="preview-scroll-area" id="previewArea"></div>
 
             <div class="chat-footer">
@@ -194,7 +188,7 @@
             </div>
         </div>
 
-        <!-- OVERLAYS -->
+        <!-- POPUP -->
         <div class="overlay" id="actionOverlay">
             <div class="action-menu-container">
                 <div class="menu-item" onclick="handleMenuAction('reply')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>Reply</div></div>
@@ -203,15 +197,18 @@
                 <div class="menu-item delete" onclick="handleMenuAction('delete')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Delete</div></div>
             </div>
         </div>
+        
         <div class="overlay" id="emojiOverlay" style="justify-content: center;">
             <div class="emoji-picker-container"><div class="emoji-grid" id="emojiGrid"></div></div>
         </div>
+
         <div class="media-viewer" id="mediaViewer">
             <div class="close-viewer" onclick="closeMediaViewer()"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
             <img id="viewerImage" src="" style="display:none;"><video id="viewerVideo" src="" controls style="display:none;"></video>
         </div>
     </div>
 
+    <!-- SOCKET -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -242,12 +239,51 @@
         const emojiGrid = document.getElementById('emojiGrid');
         const downloadOption = document.getElementById('downloadOption');
         let activeMessageRow = null; 
-        const defaultBg = "https://images.pexels.com/photos/15036815/pexels-photo-15036815.jpeg";
+        const defaultBg = "https://images.unsplash.com/photo-1623164326546-24df97b97637?q=80&w=1000&auto=format&fit=crop";
 
         socket.on('connect', () => { document.getElementById('connectionStatus').innerText = "Online"; });
         socket.on('disconnect', () => { document.getElementById('connectionStatus').innerText = "Connecting..."; });
 
-        // --- 1. FILE SELECTION LOGIC ---
+        // --- UTILS: FORMAT BYTES ---
+        function formatBytes(bytes, decimals = 0) {
+            if (!+bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'kB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))} ${sizes[i]}`;
+        }
+
+        // --- 1. SEND LOGIC ---
+        function sendPayload(type, content, fileSize = "") {
+            const msg = {
+                id: Date.now() + Math.random().toString(16),
+                user: myName,
+                type: type,
+                content: content, // Text or Base64
+                size: fileSize,   // Send size
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            socket.emit('chat message', msg);
+        }
+
+        // --- 2. INPUT HANDLERS ---
+        input.addEventListener('input', function() {
+            this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';
+            if (this.value.trim().length > 0) { micBtn.style.display = 'none'; sendBtn.style.display = 'flex'; }
+            else { micBtn.style.display = 'flex'; sendBtn.style.display = 'none'; }
+        });
+
+        actionBtn.addEventListener('click', function(e) {
+            if (e.target.closest('#micBtn')) return;
+            const text = input.value.trim();
+            if (sendBtn.style.display === 'flex' && text.length > 0) {
+                sendPayload('text', text);
+                input.value = ''; input.style.height = 'auto';
+                micBtn.style.display = 'flex'; sendBtn.style.display = 'none'; input.focus();
+            }
+        });
+
+        // --- 3. FILE SELECT & SEND ---
         let selectedFiles = [];
 
         attachBtn.addEventListener('click', () => fileInput.click());
@@ -258,19 +294,15 @@
                     selectedFiles.push(file);
                 });
                 renderPreviews();
-                // Reset value to allow selecting same file again
                 this.value = '';
             }
         });
 
         function renderPreviews() {
             previewArea.innerHTML = '';
-            
             if (selectedFiles.length > 0) {
                 previewArea.style.display = 'block';
-                // Show Send Button
-                micBtn.style.display = 'none';
-                sendBtn.style.display = 'flex';
+                micBtn.style.display = 'none'; sendBtn.style.display = 'flex';
                 
                 selectedFiles.forEach((file, index) => {
                     const item = document.createElement('div');
@@ -282,126 +314,63 @@
                         img.className = 'preview-thumb';
                         item.appendChild(img);
                     } else {
-                        // Video or other file placeholder
                         const icon = document.createElement('div');
                         icon.style.cssText = "width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#eee; font-size:10px; font-weight:bold; color:#555;";
                         icon.innerText = file.type.split('/')[0].toUpperCase();
                         item.appendChild(icon);
                     }
-
-                    // Remove Button
                     const btn = document.createElement('div');
                     btn.className = 'preview-remove';
                     btn.innerHTML = '×';
-                    btn.onclick = () => removeFile(index);
+                    btn.onclick = () => { selectedFiles.splice(index, 1); renderPreviews(); };
                     item.appendChild(btn);
-
                     previewArea.appendChild(item);
                 });
             } else {
                 previewArea.style.display = 'none';
-                // Reset buttons if text is also empty
-                if(input.value.trim().length === 0) {
-                    micBtn.style.display = 'flex';
-                    sendBtn.style.display = 'none';
-                }
+                if(input.value.trim().length === 0) { micBtn.style.display = 'flex'; sendBtn.style.display = 'none'; }
             }
         }
 
-        function removeFile(index) {
-            selectedFiles.splice(index, 1);
-            renderPreviews();
-        }
-
-        // --- 2. SENDING LOGIC (ASYNC) ---
-        async function sendAll() {
-            const text = input.value.trim();
-            
-            // If nothing to send, return
-            if (!text && selectedFiles.length === 0) return;
-
-            // Show Send Button Logic handled by UI toggles, but here we process
-            
-            // Send Text
-            if (text) {
-                sendPayload('text', text);
-                input.value = '';
-                input.style.height = 'auto';
-            }
-
-            // Send Files (Sequentially)
-            if (selectedFiles.length > 0) {
+        // New Logic to Handle Multiple Files Sending
+        sendBtn.addEventListener('click', async function(e) {
+            // Check if we are sending text (already handled by actionBtn click if input has text)
+            // But if text is empty and files are present, this handles it.
+            if (input.value.trim().length === 0 && selectedFiles.length > 0) {
                 loadingOverlay.style.display = 'flex';
                 
                 for (const file of selectedFiles) {
                     await readFileAndSend(file);
                 }
                 
-                // Cleanup
                 selectedFiles = [];
                 renderPreviews();
                 loadingOverlay.style.display = 'none';
+                
+                // Reset buttons
+                micBtn.style.display = 'flex';
+                sendBtn.style.display = 'none';
             }
-            
-            // Reset Button State
-            micBtn.style.display = 'flex';
-            sendBtn.style.display = 'none';
-            input.focus();
-        }
+        });
 
         function readFileAndSend(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     const type = file.type.startsWith('video') ? 'video' : 'image';
-                    sendPayload(type, e.target.result);
-                    resolve(); // Resolve promise after sending
+                    const size = formatBytes(file.size);
+                    sendPayload(type, e.target.result, size);
+                    resolve();
                 };
                 reader.readAsDataURL(file);
             });
         }
 
-        function sendPayload(type, content) {
-            const msg = {
-                id: Date.now() + Math.random().toString(16),
-                user: myName,
-                type: type,
-                content: content,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            socket.emit('chat message', msg);
-        }
-
-        // --- 3. INPUT HANDLERS ---
-        input.addEventListener('input', function() {
-            this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';
-            // Toggle buttons based on text OR files
-            if (this.value.trim().length > 0 || selectedFiles.length > 0) { 
-                micBtn.style.display = 'none'; sendBtn.style.display = 'flex'; 
-            } else { 
-                micBtn.style.display = 'flex'; sendBtn.style.display = 'none'; 
-            }
-        });
-
-        // Action Button Click
-        actionBtn.addEventListener('click', function(e) {
-            // If Mic is visible, don't trigger send logic (Mic logic is separate)
-            if (micBtn.style.display !== 'none' && !isRecording) {
-                // Recording logic triggers via micBtn click listener below
-                return; 
-            }
-            
-            // If Send button is visible
-            if (sendBtn.style.display !== 'none') {
-                sendAll();
-            }
-        });
-
         // --- 4. AUDIO REC ---
         let mediaRecorder, audioChunks = [], isRecording = false, recStartTime, recInterval, shouldSendRec = false;
 
         micBtn.addEventListener('click', async (e) => {
-            e.stopPropagation(); // Prevent bubbling
+            e.stopPropagation();
             if (!isRecording) {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -457,7 +426,7 @@
             recTimer.innerText = "0:00";
         }
 
-        // --- 5. RENDER ---
+        // --- 5. RENDER MESSAGE ---
         socket.on('chat message', (data) => {
             addMessage(data);
         });
@@ -470,16 +439,52 @@
             div.className = `message-row ${isMe ? 'msg-sent' : 'msg-received'}`;
             div.dataset.type = data.type; div.dataset.content = data.content; 
 
+            // Only time, no ticks
+            const time = data.time;
+            
             let innerHTML = '';
             if (data.type === 'text') {
-                innerHTML = `<div class="bubble">${data.content}<div class="msg-time">${data.time}</div></div>`;
-            } else if (data.type === 'image') {
-                innerHTML = `<div class="bubble has-media" style="background:${isMe?'#EEFFDE':'#FFF'}"><img src="${data.content}" class="chat-media" onclick="openFullView(this.src, 'image')"><div class="time-overlay" style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.4); color:white; padding:2px 6px; border-radius:10px; font-size:11px;">${data.time}</div></div>`;
-            } else if (data.type === 'video') {
-                innerHTML = `<div class="bubble has-media" style="background:${isMe?'#EEFFDE':'#FFF'}"><video src="${data.content}" class="chat-media" onclick="openFullView('${data.content}', 'video')"></video><div class="time-overlay" style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.4); color:white; padding:2px 6px; border-radius:10px; font-size:11px;">${data.time}</div></div>`;
-            } else if (data.type === 'audio') {
+                innerHTML = `<div class="bubble">${data.content}<div class="msg-time">${time}</div></div>`;
+            } 
+            else if (data.type === 'image' || data.type === 'video') {
+                const uniqueId = `media_${data.id}`;
+                
+                // Content for sender: Direct view
+                // Content for receiver: Blurred + Download Button
+                let mediaContent = '';
+                
+                if (isMe) {
+                    // Sender sees it clearly immediately
+                    if (data.type === 'image') {
+                        mediaContent = `<img src="${data.content}" class="chat-media" onclick="openFullView(this.src, 'image')">`;
+                    } else {
+                        mediaContent = `<video src="${data.content}" class="chat-media" onclick="openFullView('${data.content}', 'video')"></video>`;
+                    }
+                } else {
+                    // Receiver sees download UI
+                    const mediaTag = data.type === 'image' ? 
+                        `<img src="${data.content}" class="chat-media blur" id="img_${uniqueId}">` : 
+                        `<video src="${data.content}" class="chat-media blur" id="vid_${uniqueId}"></video>`;
+                    
+                    mediaContent = `
+                        <div class="media-container" id="cont_${uniqueId}">
+                            ${mediaTag}
+                            <div class="download-overlay" id="overlay_${uniqueId}">
+                                <div class="download-pill" onclick="downloadMedia('${uniqueId}', '${data.type}')" id="btn_${uniqueId}">
+                                    <svg class="icon-btn" style="width:16px; height:16px; fill:white;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                                    <span>${data.size || 'File'}</span>
+                                </div>
+                                <div class="media-loader" id="loader_${uniqueId}"></div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                innerHTML = `<div class="bubble has-media" style="background:${isMe?'#EEFFDE':'#FFF'}">${mediaContent}<div class="time-overlay" style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.4); color:white; padding:2px 6px; border-radius:10px; font-size:11px;">${time}</div></div>`;
+            } 
+            else if (data.type === 'audio') {
                 const audioId = 'audio_' + data.id;
-                innerHTML = `<div class="bubble"><div class="audio-player"><div class="play-icon" onclick="playAudio('${audioId}', this)"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><div class="audio-track"><div class="audio-progress" id="prog_${audioId}"></div></div><audio id="${audioId}" src="${data.content}" ontimeupdate="updateAudioProgress('${audioId}')" onended="resetAudioIcon(this)"></audio></div><div class="msg-time" style="margin-top:2px;">${data.time}</div></div>`;
+                innerHTML = `<div class="bubble"><div class="audio-player"><div class="play-icon" onclick="playAudio('${audioId}', this)"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><div class="audio-track"><div class="audio-progress" id="prog_${audioId}"></div></div><audio id="${audioId}" src="${data.content}" ontimeupdate="updateAudioProgress('${audioId}')" onended="resetAudioIcon(this)"></audio></div><div class="msg-time" style="margin-top:2px;">${time}</div></div>`;
             }
 
             div.innerHTML = innerHTML;
@@ -489,7 +494,39 @@
             attachEvents(bubble, div, data.type, data.content);
         }
 
-        // --- HELPERS ---
+        // --- 6. DOWNLOAD LOGIC ---
+        function downloadMedia(id, type) {
+            const btn = document.getElementById(`btn_${id}`);
+            const loader = document.getElementById(`loader_${id}`);
+            const overlay = document.getElementById(`overlay_${id}`);
+            const img = document.getElementById(`img_${id}`);
+            const vid = document.getElementById(`vid_${id}`);
+            const media = img || vid;
+
+            // UI State: Downloading
+            btn.style.display = 'none';
+            loader.style.display = 'block';
+
+            // Simulate Network Delay (1.5s)
+            setTimeout(() => {
+                loader.style.display = 'none';
+                overlay.style.opacity = '0';
+                
+                // Remove Blur
+                if(media) media.classList.remove('blur');
+
+                // Allow Full Screen Click now
+                const container = document.getElementById(`cont_${id}`);
+                container.style.cursor = 'pointer';
+                container.onclick = () => openFullView(media.src, type);
+                
+                // Cleanup overlay DOM
+                setTimeout(() => overlay.remove(), 300);
+
+            }, 1500);
+        }
+
+        // --- 7. HELPERS ---
         function playAudio(id, btn) {
             const audio = document.getElementById(id);
             const icon = btn.querySelector('svg');
@@ -522,7 +559,6 @@
         document.getElementById('btnResetBg').addEventListener('click', () => { chatFrame.style.backgroundImage = `url('${defaultBg}')`; settingsMenu.classList.remove('active'); });
         document.getElementById('btnClearChat').addEventListener('click', () => { chatList.innerHTML = '<div class="date-label">Today</div>'; settingsMenu.classList.remove('active'); });
 
-        // --- MENU EVENTS ---
         function attachEvents(el, row, type, content) {
             let timer, isScrolling = false;
             const start = () => { isScrolling=false; timer=setTimeout(()=>{ if(!isScrolling) openActionMenu(row); },500); };
@@ -533,6 +569,9 @@
         }
         function handleSingleClick(row, type, content) {
             activeMessageRow = row;
+            // Prevent opening viewer if media is not downloaded yet (has overlay)
+            if ((type === 'image' || type === 'video') && row.querySelector('.download-overlay')) return;
+
             if (type === 'text') emojiOverlay.classList.add('active');
             else if (type === 'image' || type === 'video') openMediaViewer(content, type);
         }
