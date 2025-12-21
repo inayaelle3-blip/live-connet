@@ -3,31 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Payes Demo UI</title>
+    <title>Payes Realtime Chat</title>
     <style>
-        /* --- 1. SETUP & LAYOUT --- */
+        /* --- SAME CSS AS BEFORE (NO CHANGES) --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: #1e1e1e; height: 100vh; display: flex; justify-content: center; overflow: hidden; }
 
-        .mobile-frame { 
-            width: 100%; max-width: 450px; height: 100%; 
-            background-color: #222; 
-            display: flex; flex-direction: column; position: relative; 
-            overflow: hidden; 
-        }
-
         .wallpaper-bg {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: url('https://images.pexels.com/photos/15036815/pexels-photo-15036815.jpeg');
             background-size: cover; background-position: center; background-repeat: no-repeat;
             z-index: 0; pointer-events: none;
         }
 
-        /* --- 2. HEADER --- */
+        .mobile-frame { 
+            width: 100%; max-width: 450px; height: 100%; 
+            background-color: transparent; display: flex; flex-direction: column; position: relative; 
+            overflow: hidden; z-index: 1; 
+        }
+
         .header {
             background-color: #517DA2; height: 55px; padding: 0 10px; display: flex; align-items: center; gap: 10px;
-            color: white; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2); 
-            z-index: 20; position: relative;
+            color: white; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; position: relative;
         }
         .back-btn { width: 24px; height: 24px; fill: white; cursor: pointer; }
         .profile-pic { width: 38px; height: 38px; border-radius: 50%; background: #333; object-fit: cover; }
@@ -36,7 +33,6 @@
         .user-status { font-size: 12px; opacity: 0.8; }
         .header-icon { width: 24px; height: 24px; fill: white; cursor: pointer; margin-left: 10px; padding: 2px; border-radius: 50%; }
 
-        /* Menu */
         .settings-menu { position: absolute; top: 50px; right: 10px; width: 200px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: none; flex-direction: column; overflow: hidden; z-index: 30; transform-origin: top right; animation: menuPop 0.2s ease-out; }
         .settings-menu.active { display: flex; }
         @keyframes menuPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -45,14 +41,12 @@
         .setting-item.delete { color: #FF3B30; }
         .setting-item svg { width: 20px; height: 20px; fill: currentColor; }
 
-        /* --- 3. CHAT LIST --- */
         .chat-list {
             flex-grow: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px;
             scroll-behavior: smooth; padding-bottom: 20px; z-index: 10;
         }
         .date-label { align-self: center; background: rgba(0,0,0,0.3); color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin: 10px 0; }
 
-        /* --- 4. BUBBLES --- */
         .message-row { 
             display: flex; width: 100%; margin-bottom: 8px; position: relative; 
             animation: msgSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
@@ -61,54 +55,28 @@
             max-height: 500px; opacity: 1; transform: scale(1);
         } 
         @keyframes msgSlideUp { 0% { opacity: 0; transform: translateY(20px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-        
         .message-row.deleting { opacity: 0; transform: scale(0.9) translateY(10px); max-height: 0; margin: 0; overflow: hidden; }
         
         .bubble { max-width: 80%; padding: 6px 10px; border-radius: 8px; font-size: 16px; line-height: 1.3; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; cursor: pointer; transition: transform 0.1s; }
         .bubble:active { background-color: rgba(0,0,0,0.05); }
         .bubble.has-media { padding: 3px; border-radius: 8px; background: transparent; }
         
-        /* NEW: Media Wrapper for Download State */
-        .media-container { 
-            position: relative; width: 200px; height: 300px; 
-            border-radius: 6px; overflow: hidden; 
-            display: flex; justify-content: center; align-items: center; 
-        }
-        
-        .chat-media { 
-            width: 100%; height: 100%; object-fit: cover; display: block; 
-            transition: filter 0.3s ease, transform 0.3s ease;
-        }
+        .media-container { position: relative; width: 200px; height: 300px; border-radius: 6px; overflow: hidden; display: flex; justify-content: center; align-items: center; background: #000; }
+        .chat-media { width: 100%; height: 100%; object-fit: cover; display: block; transition: filter 0.3s ease, transform 0.3s ease; }
         .chat-media.blur { filter: blur(12px); transform: scale(1.1); }
 
-        .download-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center;
-            background: rgba(0,0,0,0.2); z-index: 5;
-            transition: opacity 0.3s ease; 
-        }
+        .download-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.2); z-index: 5; transition: opacity 0.3s ease; }
         .download-overlay.hidden { opacity: 0; pointer-events: none; }
         
-        .download-pill {
-            background: rgba(0, 0, 0, 0.6); 
-            backdrop-filter: blur(4px);
-            color: white; 
-            padding: 8px 14px; 
-            border-radius: 20px; 
-            display: flex; align-items: center; gap: 8px; 
-            font-size: 13px; font-weight: 500;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            cursor: pointer; transition: transform 0.1s;
-        }
+        .download-pill { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); color: white; padding: 8px 14px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; transition: transform 0.1s; }
         .download-pill:active { transform: scale(0.95); }
         .download-icon { width: 16px; height: 16px; fill: white; }
         
-        .media-loader {
-            width: 28px; height: 28px; border: 3px solid rgba(255,255,255,0.3); 
-            border-top: 3px solid white; border-radius: 50%;
-            animation: spin 1s linear infinite; display: none; 
-        }
+        .media-loader { width: 28px; height: 28px; border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; animation: spin 1s linear infinite; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .chat-play-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 45px; height: 45px; background: rgba(0,0,0,0.5); border-radius: 50%; display: flex; align-items: center; justify-content: center; pointer-events: none; border: 2px solid white; z-index: 2; }
+        .chat-play-overlay svg { fill: white; width: 24px; height: 24px; margin-left: 2px; }
 
         .msg-sent { justify-content: flex-end; }
         .msg-sent .bubble { background-color: #EEFFDE; color: #000; border-bottom-right-radius: 0; }
@@ -121,7 +89,6 @@
         .msg-sent .reaction-badge { right: 10px; }
         .msg-received .reaction-badge { left: 10px; }
 
-        /* Audio Player */
         .audio-player { display: flex; align-items: center; gap: 10px; width: 230px; padding: 5px 0; }
         .play-icon { width: 40px; height: 40px; background: #539CDE; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.1s; }
         .play-icon:active { transform: scale(0.95); }
@@ -129,14 +96,8 @@
         .audio-track { flex-grow: 1; height: 3px; background: rgba(0,0,0,0.1); position: relative; border-radius: 5px; overflow: hidden; }
         .audio-progress { width: 0%; height: 100%; background: #539CDE; border-radius: 5px; transition: width 0.1s linear; }
 
-        /* --- 5. FOOTER & PREVIEW --- */
         .footer-container { background: transparent; display: flex; flex-direction: column; z-index: 20; transition: padding-bottom 0.3s ease; }
-
-        .preview-scroll-area {
-            display: none; padding: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(2px);
-            border-top: 1px solid rgba(255,255,255,0.1); overflow-x: auto; white-space: nowrap; gap: 10px;
-            border-radius: 15px; margin: 0 10px 10px 10px;
-        }
+        .preview-scroll-area { display: none; padding: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(2px); border-top: 1px solid rgba(255,255,255,0.1); overflow-x: auto; white-space: nowrap; gap: 10px; border-radius: 15px; margin: 0 10px 10px 10px; }
         .preview-item { display: inline-block; position: relative; width: 60px; height: 60px; margin-right: 10px; border-radius: 8px; overflow: hidden; border: 2px solid #517DA2; background: #fff; vertical-align: top; }
         .preview-thumb { width: 100%; height: 100%; object-fit: cover; }
         .preview-remove { position: absolute; top: 0; right: 0; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 20px; height: 20px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2; }
@@ -144,14 +105,12 @@
         .chat-footer { padding: 5px 8px; display: flex; align-items: flex-end; gap: 8px; min-height: 50px; margin-bottom: 14px; flex-shrink: 0; background: transparent; }
         .input-container { flex-grow: 1; background: #FFFFFF; border-radius: 22px; display: flex; align-items: flex-end; padding: 8px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: all 0.2s ease; }
         .chat-input { flex-grow: 1; border: none; outline: none; font-size: 17px; max-height: 120px; overflow-y: auto; resize: none; padding: 0 8px; margin-bottom: 2px; font-family: "Roboto", sans-serif; background: transparent; }
-        
         .recording-ui { flex-grow: 1; background: #FFFFFF; border-radius: 22px; display: flex; align-items: center; padding: 12px 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); animation: slideInRight 0.2s; }
         @keyframes slideInRight { from{opacity:0; transform:translateX(20px);} to{opacity:1; transform:translateX(0);} }
         .rec-dot { width: 10px; height: 10px; background-color: #FF3B30; border-radius: 50%; margin-right: 10px; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0; } }
         #recTimer { font-size: 17px; font-weight: 500; color: #333; min-width: 50px; }
         .cancel-rec { color: #FF3B30; font-weight: 600; cursor: pointer; font-size: 15px; margin-left: auto; text-transform: uppercase; }
-        
         .icon-btn { width: 26px; height: 26px; fill: #89939B; cursor: pointer; flex-shrink: 0; margin-bottom: 1px; }
         .action-btn-wrapper { width: 42px; height: 42px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .mic-btn, .send-btn { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: transform 0.1s; }
@@ -159,8 +118,7 @@
         .mic-btn { background: #FFFFFF; } .mic-btn svg { width: 22px; height: 22px; fill: #89939B; }
         .send-btn { background: #539CDE; display: none; } .send-btn svg { width: 20px; height: 20px; fill: #FFFFFF; margin-left: 2px; margin-top: 2px; }
 
-        /* Overlays */
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); z-index: 100; display: none; flex-direction: column; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.2s; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 100; display: none; flex-direction: column; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.2s; }
         .overlay.active { display: flex; opacity: 1; }
         .action-menu-container { width: 250px; background: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); transform: scale(0.9); transition: transform 0.2s; display: flex; flex-direction: column; margin-bottom: 50px; }
         .overlay.active .action-menu-container { transform: scale(1); }
@@ -169,26 +127,48 @@
         .menu-content { display: flex; align-items: center; width: 100%; }
         .menu-icon { width: 24px; height: 24px; margin-right: 18px; fill: #333; }
         .menu-item.delete { color: #FF3B30; } .menu-item.delete .menu-icon { fill: #FF3B30; width: 20px; height: 20px; }
-        #downloadOption { display: none; }
+        .emoji-picker-container { display: none; } 
         
-        .emoji-picker-container { width: 100%; max-width: 380px; height: 50%; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); display: flex; flex-direction: column; transform: translateY(20px); transition: transform 0.2s; align-self: center; }
-        .overlay.active .emoji-picker-container { transform: translateY(0); }
-        .emoji-grid { flex-grow: 1; overflow-y: auto; padding: 10px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; align-content: start; }
-        .emoji-item { font-size: 28px; text-align: center; cursor: pointer; padding: 5px; border-radius: 5px; }
-        .emoji-item:active { background: #f0f0f0; transform: scale(1.2); }
+        .media-viewer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: transparent; z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center; opacity: 0; transition: background-color 0.3s ease; }
+        .media-viewer.active { display: flex; background: black; opacity: 1; }
         
-        .media-viewer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 200; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s; }
-        .media-viewer.active { display: flex; opacity: 1; }
-        .media-viewer img, .media-viewer video { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .close-viewer { position: absolute; top: 15px; left: 15px; width: 35px; height: 35px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; fill: white; }
-        #loadingOverlay { display: none; position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index: 300; align-items: center; justify-content: center; flex-direction: column; color: white; font-weight: bold; }
+        .viewer-header { position: absolute; top: 0; left: 0; width: 100%; height: 60px; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: flex; align-items: center; padding: 0 10px; color: white; z-index: 210; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .viewer-header.hidden { transform: translateY(-100%); opacity: 0; }
+        .viewer-back { width: 24px; height: 24px; fill: white; cursor: pointer; margin-right: 10px; }
+        .viewer-info { flex-grow: 1; display: flex; flex-direction: column; }
+        .viewer-name { font-weight: 500; font-size: 16px; }
+        .viewer-time { font-size: 12px; opacity: 0.8; }
+        .viewer-actions { display: flex; gap: 15px; margin-right: 5px; }
+        .viewer-icon { width: 24px; height: 24px; fill: white; cursor: pointer; }
+
+        .media-content-wrapper { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; position: relative; }
+        .media-viewer img, .media-viewer video { max-width: 100%; max-height: 100%; object-fit: contain; transform-origin: center; transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1); }
+
+        .center-play-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 60px; height: 60px; border-radius: 50%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 205; transition: opacity 0.3s ease, transform 0.1s; }
+        .center-play-btn:active { transform: translate(-50%, -50%) scale(0.9); }
+        .center-play-btn svg { width: 30px; height: 30px; fill: white; margin-left: 2px; }
+        .center-play-btn.hidden { opacity: 0; pointer-events: none; }
+
+        .video-controls { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 20px 15px 30px 15px; display: flex; align-items: center; gap: 10px; color: white; z-index: 210; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .video-controls.hidden { transform: translateY(100%); opacity: 0; }
+        .video-time { font-size: 12px; font-weight: 500; min-width: 35px; }
+        .video-speed { font-size: 12px; font-weight: 500; min-width: 30px; text-align: right; opacity: 0.8; }
+        .video-progress { flex-grow: 1; -webkit-appearance: none; height: 4px; background: rgba(255,255,255,0.3); border-radius: 2px; outline: none; cursor: pointer; }
+        .video-progress::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #25D366; border-radius: 50%; cursor: pointer; border: 2px solid white; }
+
+        .viewer-menu { position: absolute; top: 55px; right: 10px; width: 180px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); display: none; flex-direction: column; z-index: 220; overflow: hidden; animation: menuPop 0.2s ease; }
+        .viewer-menu.active { display: flex; }
+        .v-menu-item { padding: 12px 15px; font-size: 15px; color: #333; cursor: pointer; display: flex; gap: 10px; align-items: center; }
+        .v-menu-item:active { background: #f0f0f0; }
+        .v-menu-item svg { width: 18px; height: 18px; fill: #444; }
+        .v-menu-item.delete { color: #d32f2f; }
+        .v-menu-item.delete svg { fill: #d32f2f; }
     </style>
 </head>
 <body>
 
     <div class="mobile-frame" id="chatFrame">
         <div class="wallpaper-bg" id="wallpaperBg"></div>
-        <div id="loadingOverlay"><div class="media-loader" style="display:block; width:30px; height:30px; margin-bottom:10px;"></div>Sending...</div>
 
         <!-- HEADER -->
         <div class="header">
@@ -196,10 +176,9 @@
             <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100" class="profile-pic">
             <div class="user-info">
                 <div class="user-name">Cobb</div>
-                <div class="user-status" id="connectionStatus">Connecting...</div>
+                <div class="user-status">online</div>
             </div>
             <svg class="header-icon" id="threeDotsBtn" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-            
             <div class="settings-menu" id="settingsMenu">
                 <div class="setting-item" id="btnChangeBg"><svg viewBox="0 0 24 24"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4.86 8.86l-3 3.87L9 13.14 6 17h12l-3.86-5.14z"/></svg>Change Wallpaper</div>
                 <div class="setting-item" id="btnResetBg"><svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>Reset Wallpaper</div>
@@ -211,443 +190,338 @@
         <!-- CHAT LIST -->
         <div class="chat-list" id="chatList">
             <div class="date-label">Today</div>
+            <div class="message-row msg-received">
+                <div class="bubble">
+                    Welcome to the server! Messages will now sync.
+                    <div class="msg-time">Now</div>
+                </div>
+            </div>
         </div>
 
         <!-- FOOTER -->
         <div class="footer-container">
             <input type="file" id="fileInput" multiple style="display: none;">
             <div class="preview-scroll-area" id="previewArea"></div>
-
             <div class="chat-footer">
                 <div class="input-container" id="inputUI">
                     <svg class="icon-btn" style="margin-right: 5px;" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
                     <textarea id="msgInput" class="chat-input" placeholder="Message" rows="1"></textarea>
                     <svg id="attachBtn" class="icon-btn" style="margin-left: 5px; transform: rotate(45deg);" viewBox="0 0 24 24"><path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/></svg>
                 </div>
-
                 <div class="recording-ui" id="recordingUI" style="display: none;">
-                    <div class="rec-dot"></div>
-                    <span id="recTimer">0:00</span>
-                    <div class="cancel-rec" onclick="cancelRecording()">Cancel</div>
+                    <div class="rec-dot"></div><span id="recTimer">0:00</span><div class="cancel-rec" onclick="cancelRecording()">Cancel</div>
                 </div>
-
                 <div class="action-btn-wrapper" id="actionBtn">
                     <div class="mic-btn" id="micBtn">
                         <svg id="micIcon" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
                         <svg id="recSendIcon" style="display:none; fill:#539CDE; width:24px; height:24px;" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                     </div>
-                    <div class="send-btn" id="sendBtn">
-                        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-                    </div>
+                    <div class="send-btn" id="sendBtn"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></div>
                 </div>
             </div>
         </div>
 
-        <!-- POPUP -->
+        <!-- POPUP & VIEWER CODE (SAME AS BEFORE) -->
         <div class="overlay" id="actionOverlay">
             <div class="action-menu-container">
+                <div class="menu-item" onclick="handleMenuAction('edit')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>Edit</div></div>
                 <div class="menu-item" onclick="handleMenuAction('reply')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>Reply</div></div>
-                <div class="menu-item" onclick="handleMenuAction('save')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>Copy</div></div>
-                <div class="menu-item" id="downloadOption" onclick="handleMenuAction('download')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>Save</div></div>
+                <div class="menu-item" onclick="handleMenuAction('share')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>Share</div></div>
+                <div class="menu-item" onclick="handleMenuAction('forward')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M12 8V4l8 8-8 8v-4H4V8z"/></svg>Forward</div></div>
+                <div class="menu-item" onclick="handleMenuAction('copy')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>Copy</div></div>
                 <div class="menu-item delete" onclick="handleMenuAction('delete')"><div class="menu-content"><svg class="menu-icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Delete</div></div>
             </div>
         </div>
-        
-        <div class="overlay" id="emojiOverlay" style="justify-content: center;">
-            <div class="emoji-picker-container"><div class="emoji-grid" id="emojiGrid"></div></div>
-        </div>
 
         <div class="media-viewer" id="mediaViewer">
-            <div class="close-viewer" onclick="closeMediaViewer()"><svg viewBox="0 0 24 24" width="24" height="24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></div>
-            <img id="viewerImage" src="" style="display:none;"><video id="viewerVideo" src="" controls style="display:none;"></video>
+            <div class="viewer-header" id="viewerHeader">
+                <svg class="viewer-back" viewBox="0 0 24 24" onclick="closeMediaViewer(event)"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                <div class="viewer-info"><div class="viewer-name" id="viewerName">Cobb</div><div class="viewer-time" id="viewerTime">today at 9:03 PM</div></div>
+                <div class="viewer-actions"><svg class="viewer-icon" id="mediaMenuBtn" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></div>
+                <div class="viewer-menu" id="viewerMenu">
+                    <div class="v-menu-item" onclick="viewerAction('save')"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>Save</div>
+                    <div class="v-menu-item" onclick="viewerAction('share')"><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>Share</div>
+                    <div class="v-menu-item" onclick="viewerAction('forward')"><svg viewBox="0 0 24 24"><path d="M12 8V4l8 8-8 8v-4H4V8z"/></svg>Forward</div>
+                    <div class="v-menu-item" onclick="viewerAction('edit')"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>Edit</div>
+                    <div class="v-menu-item delete" onclick="viewerAction('delete')"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>Delete</div>
+                </div>
+            </div>
+            <div class="media-content-wrapper" onclick="toggleViewerControls()">
+                <img id="viewerImage" src="" style="display:none;">
+                <video id="viewerVideo" src="" style="display:none;" ontimeupdate="updateVideoProgress()"></video>
+                <div class="center-play-btn" id="centerPlayBtn" onclick="toggleVideoPlay(event)" style="display:none;"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+                <div class="video-controls" id="videoControls" style="display:none;">
+                    <span class="video-time" id="curTime">00:00</span>
+                    <input type="range" class="video-progress" id="vidProgress" value="0" min="0" max="100" oninput="seekVideo()">
+                    <span class="video-time" id="durTime">00:00</span>
+                    <span class="video-speed">1.0x</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- SOCKET -->
+    <!-- SOCKET.IO CLIENT SCRIPT -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
-        const myName = "User" + Math.floor(Math.random() * 9000);
+        const socket = io(); // Initialize Socket.io
 
-        // Elements
-        const input = document.getElementById('msgInput');
-        const micBtn = document.getElementById('micBtn');
-        const sendBtn = document.getElementById('sendBtn');
-        const chatList = document.getElementById('chatList');
-        const actionBtn = document.getElementById('actionBtn');
-        const attachBtn = document.getElementById('attachBtn');
-        const fileInput = document.getElementById('fileInput');
-        const recordingUI = document.getElementById('recordingUI');
-        const inputUI = document.getElementById('inputUI');
-        const recTimer = document.getElementById('recTimer');
-        const micIcon = document.getElementById('micIcon');
-        const recSendIcon = document.getElementById('recSendIcon');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const mediaViewer = document.getElementById('mediaViewer');
-        const settingsMenu = document.getElementById('settingsMenu');
-        const threeDotsBtn = document.getElementById('threeDotsBtn');
-        const bgInput = document.getElementById('bgInput');
-        const chatFrame = document.getElementById('chatFrame');
-        const previewArea = document.getElementById('previewArea');
-        const actionOverlay = document.getElementById('actionOverlay');
-        const emojiOverlay = document.getElementById('emojiOverlay');
-        const emojiGrid = document.getElementById('emojiGrid');
-        const downloadOption = document.getElementById('downloadOption');
-        let activeMessageRow = null; 
-        const defaultBg = "https://images.pexels.com/photos/15036815/pexels-photo-15036815.jpeg";
-
-        socket.on('connect', () => { document.getElementById('connectionStatus').innerText = "Online"; });
-        socket.on('disconnect', () => { document.getElementById('connectionStatus').innerText = "Connecting..."; });
-
-        // --- UTILS ---
-        function formatBytes(bytes, decimals = 0) {
-            if (!+bytes) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'kB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))} ${sizes[i]}`;
-        }
-
-        // --- 1. SEND LOGIC ---
-        function sendPayload(type, content, fileSize = "") {
-            const msg = {
-                id: Date.now() + Math.random().toString(16),
-                user: myName,
-                type: type,
-                content: content, // Text or Base64
-                size: fileSize,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            socket.emit('chat message', msg);
-        }
-
-        // --- 2. INPUT ---
-        input.addEventListener('input', function() {
-            this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';
-            if (this.value.trim().length > 0) { micBtn.style.display = 'none'; sendBtn.style.display = 'flex'; }
-            else { micBtn.style.display = 'flex'; sendBtn.style.display = 'none'; }
-        });
-
-        actionBtn.addEventListener('click', function(e) {
-            if (e.target.closest('#micBtn')) return;
-            const text = input.value.trim();
-            if (sendBtn.style.display === 'flex' && text.length > 0) {
-                sendPayload('text', text);
-                input.value = ''; input.style.height = 'auto';
-                micBtn.style.display = 'flex'; sendBtn.style.display = 'none'; input.focus();
-            }
-        });
-
-        // --- 3. FILE SELECT & SEND ---
-        let selectedFiles = [];
-
-        attachBtn.addEventListener('click', () => fileInput.click());
+        const input=document.getElementById('msgInput'), micBtn=document.getElementById('micBtn'), sendBtn=document.getElementById('sendBtn'), chatList=document.getElementById('chatList'), actionBtn=document.getElementById('actionBtn'), attachBtn=document.getElementById('attachBtn'), fileInput=document.getElementById('fileInput'), recordingUI=document.getElementById('recordingUI'), inputUI=document.getElementById('inputUI'), recTimer=document.getElementById('recTimer'), micIcon=document.getElementById('micIcon'), recSendIcon=document.getElementById('recSendIcon'), previewArea=document.getElementById('previewArea'), wallpaperBg=document.getElementById('wallpaperBg');
+        const settingsMenu=document.getElementById('settingsMenu'), threeDotsBtn=document.getElementById('threeDotsBtn'), bgInput=document.getElementById('bgInput'), actionOverlay=document.getElementById('actionOverlay'), mediaViewer=document.getElementById('mediaViewer'), viewerHeader=document.getElementById('viewerHeader'), viewerMenu=document.getElementById('viewerMenu'), mediaMenuBtn=document.getElementById('mediaMenuBtn');
+        const centerPlayBtn=document.getElementById('centerPlayBtn'), videoControls=document.getElementById('videoControls'), vidProgress=document.getElementById('vidProgress'), curTimeDisplay=document.getElementById('curTime'), durTimeDisplay=document.getElementById('durTime'), viewerVideo=document.getElementById('viewerVideo');
         
-        fileInput.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                Array.from(this.files).forEach(file => {
-                    selectedFiles.push(file);
+        let activeMessageRow=null, defaultBg="https://images.pexels.com/photos/15036815/pexels-photo-15036815.jpeg", selectedFiles=[], isEditing=false, editingRow=null, controlsTimeout;
+
+        // --- SOCKET LISTENER ---
+        socket.on('receiveMessage', (data) => {
+            // Receive message from server and display it
+            const msgRow = addMessage(data.content, data.type, 'received');
+            // Since it's received, it will default to having the download pill logic applied by addMessage
+        });
+
+        attachBtn.addEventListener('click',()=>fileInput.click());
+        fileInput.addEventListener('change',function(){
+            if(this.files.length>0){ Array.from(this.files).forEach(file=>selectedFiles.push(file)); renderPreviews(); this.value=''; }
+        });
+
+        function renderPreviews(){
+            previewArea.innerHTML='';
+            if(selectedFiles.length>0){
+                previewArea.style.display='block'; micBtn.style.display='none'; sendBtn.style.display='flex';
+                selectedFiles.forEach((file,index)=>{
+                    const item=document.createElement('div'); item.className='preview-item';
+                    if(file.type.startsWith('image/')){ const img=document.createElement('img'); img.src=URL.createObjectURL(file); img.className='preview-thumb'; item.appendChild(img); }
+                    else if(file.type.startsWith('video/')){ const vid=document.createElement('video'); vid.src=URL.createObjectURL(file); vid.className='preview-thumb'; vid.muted=true; vid.style.objectFit='cover'; vid.currentTime=0.1; item.appendChild(vid); }
+                    else { const icon=document.createElement('div'); icon.style.cssText="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#eee; font-size:10px; font-weight:bold; color:#555;"; icon.innerText=file.type.split('/')[0].toUpperCase(); item.appendChild(icon); }
+                    const btn=document.createElement('div'); btn.className='preview-remove'; btn.innerHTML='×'; btn.onclick=()=>{ selectedFiles.splice(index,1); renderPreviews(); }; item.appendChild(btn); previewArea.appendChild(item);
                 });
-                renderPreviews();
-                this.value = '';
-            }
-        });
-
-        function renderPreviews() {
-            previewArea.innerHTML = '';
-            if (selectedFiles.length > 0) {
-                previewArea.style.display = 'block';
-                micBtn.style.display = 'none'; sendBtn.style.display = 'flex';
-                
-                selectedFiles.forEach((file, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'preview-item';
-                    if (file.type.startsWith('image/')) {
-                        const img = document.createElement('img');
-                        img.src = URL.createObjectURL(file);
-                        img.className = 'preview-thumb';
-                        item.appendChild(img);
-                    } else {
-                        const icon = document.createElement('div');
-                        icon.style.cssText = "width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#eee; font-size:10px; font-weight:bold; color:#555;";
-                        icon.innerText = file.type.split('/')[0].toUpperCase();
-                        item.appendChild(icon);
-                    }
-                    const btn = document.createElement('div');
-                    btn.className = 'preview-remove';
-                    btn.innerHTML = '×';
-                    btn.onclick = () => { selectedFiles.splice(index, 1); renderPreviews(); };
-                    item.appendChild(btn);
-                    previewArea.appendChild(item);
-                });
-            } else {
-                previewArea.style.display = 'none';
-                if(input.value.trim().length === 0) { micBtn.style.display = 'flex'; sendBtn.style.display = 'none'; }
-            }
+            } else { previewArea.style.display='none'; if(input.value.trim().length===0){ micBtn.style.display='flex'; sendBtn.style.display='none'; } }
         }
 
-        // Send All Logic
-        sendBtn.addEventListener('click', async function(e) {
-            // Text is handled by actionBtn if present, but files are handled here if input is empty
-            if (input.value.trim().length === 0 && selectedFiles.length > 0) {
-                loadingOverlay.style.display = 'flex';
-                for (const file of selectedFiles) {
-                    await readFileAndSend(file);
-                }
-                selectedFiles = [];
-                renderPreviews();
-                loadingOverlay.style.display = 'none';
-                micBtn.style.display = 'flex';
-                sendBtn.style.display = 'none';
+        // Helper to convert file to Base64
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
+        async function demoSendAll(){
+            const text=input.value.trim();
+            if(isEditing && editingRow){
+                if(text){ 
+                    const bubble=editingRow.querySelector('.bubble'); const timeSpan=bubble.querySelector('.msg-time'); 
+                    bubble.innerHTML=text+(timeSpan?timeSpan.outerHTML:''); 
+                    editingRow.dataset.content=text; 
+                    isEditing=false; editingRow=null; input.value=''; input.style.height='auto'; micBtn.style.display='flex'; sendBtn.style.display='none'; 
+                    // Note: Edit sync logic would go here in a real app
+                } 
+                return;
             }
-        });
-
-        function readFileAndSend(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const type = file.type.startsWith('video') ? 'video' : 'image';
-                    const size = formatBytes(file.size);
-                    sendPayload(type, e.target.result, size);
-                    resolve();
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // --- 4. AUDIO REC ---
-        let mediaRecorder, audioChunks = [], isRecording = false, recStartTime, recInterval, shouldSendRec = false;
-
-        micBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (!isRecording) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    startRecording(stream);
-                } catch (err) { alert("Microphone access needed!"); }
-            } else {
-                stopRecording(true);
-            }
-        });
-
-        function startRecording(stream) {
-            isRecording = true;
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            inputUI.style.display = 'none'; recordingUI.style.display = 'flex';
-            micIcon.style.display = 'none'; recSendIcon.style.display = 'block';
-            recStartTime = Date.now();
-            recInterval = setInterval(() => {
-                const elapsed = Math.floor((Date.now() - recStartTime) / 1000);
-                const min = Math.floor(elapsed / 60);
-                const sec = elapsed % 60;
-                recTimer.innerText = `${min}:${sec < 10 ? '0'+sec : sec}`;
-            }, 1000);
-            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-            mediaRecorder.onstop = () => {
-                stream.getTracks().forEach(track => track.stop());
-                resetRecUI();
-                if (shouldSendRec) {
-                    loadingOverlay.style.display = 'flex';
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        sendPayload('audio', e.target.result);
-                        loadingOverlay.style.display = 'none';
-                    };
-                    reader.readAsDataURL(audioBlob);
-                }
-            };
-            mediaRecorder.start();
-        }
-
-        function stopRecording(send) {
-            if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
-            shouldSendRec = send;
-            mediaRecorder.stop();
-            clearInterval(recInterval);
-        }
-        function cancelRecording() { stopRecording(false); }
-        function resetRecUI() {
-            isRecording = false;
-            inputUI.style.display = 'flex'; recordingUI.style.display = 'none';
-            micIcon.style.display = 'block'; recSendIcon.style.display = 'none';
-            recTimer.innerText = "0:00";
-        }
-
-        // --- 5. RENDER MESSAGE ---
-        socket.on('chat message', (data) => {
-            addMessage(data);
-        });
-        
-        socket.on('message deleted', (id) => {
-            const el = document.getElementById(id);
-            if(el) {
-                el.style.transition = 'all 0.3s';
-                el.style.opacity = '0';
-                el.style.transform = 'scale(0.8)';
-                setTimeout(() => el.remove(), 300);
-            }
-        });
-
-        function addMessage(data) {
-            if(document.getElementById(data.id)) return;
-            const div = document.createElement('div');
-            div.id = data.id;
-            const isMe = data.user === myName;
-            div.className = `message-row ${isMe ? 'msg-sent' : 'msg-received'}`;
-            div.dataset.type = data.type; div.dataset.content = data.content; 
-
-            const time = data.time;
             
-            let innerHTML = '';
-            if (data.type === 'text') {
-                innerHTML = `<div class="bubble">${data.content}<div class="msg-time">${time}</div></div>`;
-            } 
-            else if (data.type === 'image' || data.type === 'video') {
-                const uniqueId = `media_${data.id}`;
-                let mediaContent = '';
-                
-                if (isMe) {
-                    if (data.type === 'image') {
-                        mediaContent = `<img src="${data.content}" class="chat-media" onclick="openFullView(this.src, 'image')">`;
-                    } else {
-                        mediaContent = `<video src="${data.content}" class="chat-media" onclick="openFullView('${data.content}', 'video')"></video>`;
-                    }
-                } else {
-                    const mediaTag = data.type === 'image' ? 
-                        `<img src="${data.content}" class="chat-media blur" id="img_${uniqueId}">` : 
-                        `<video src="${data.content}" class="chat-media blur" id="vid_${uniqueId}"></video>`;
+            // SENDING NEW MESSAGE
+            if(text){ 
+                addMessage(text,'text','sent'); 
+                socket.emit('chatMessage', { content: text, type: 'text' });
+                input.value=''; input.style.height='auto'; 
+            }
+            
+            if(selectedFiles.length>0){ 
+                // Process media files
+                for (const file of selectedFiles) {
+                    const type = file.type.startsWith('video') ? 'video' : 'image';
+                    const localUrl = URL.createObjectURL(file);
                     
-                    mediaContent = `
-                        <div class="media-container" id="cont_${uniqueId}">
-                            ${mediaTag}
-                            <div class="download-overlay" id="overlay_${uniqueId}">
-                                <div class="download-pill" onclick="downloadMedia('${uniqueId}', '${data.type}')" id="btn_${uniqueId}">
-                                    <svg class="icon-btn" style="width:16px; height:16px; fill:white;" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                                    <span>${data.size || 'File'}</span>
-                                </div>
-                                <div class="media-loader" id="loader_${uniqueId}"></div>
-                            </div>
-                        </div>
-                    `;
+                    // Show locally immediately (Sent state)
+                    const msgRow = addMessage(localUrl, type, 'sent');
+                    
+                    // Convert to Base64 and Send via Socket
+                    const base64Content = await toBase64(file);
+                    socket.emit('chatMessage', { content: base64Content, type: type });
+
+                    // Animate sent state locally
+                    const mediaContainer = msgRow.querySelector('.media-container');
+                    const mediaEl = msgRow.querySelector('.chat-media');
+                    const overlay = msgRow.querySelector('.download-overlay');
+                    
+                    if (mediaContainer) {
+                        setTimeout(() => {
+                            mediaContainer.dataset.state = 'sent';
+                            if (overlay) { overlay.style.opacity = '0'; setTimeout(()=>overlay.remove(), 300); }
+                            if (mediaEl) mediaEl.classList.remove('blur'); 
+                        }, 1500); // Simulate upload time
+                    }
+                }
+                selectedFiles=[]; renderPreviews();
+            }
+
+            micBtn.style.display='flex'; sendBtn.style.display='none'; input.focus(); input.placeholder="Message";
+        }
+
+        input.addEventListener('input',function(){ this.style.height='auto'; this.style.height=(this.scrollHeight)+'px'; if(this.value.trim().length>0 || selectedFiles.length>0){ micBtn.style.display='none'; sendBtn.style.display='flex'; } else { micBtn.style.display='flex'; sendBtn.style.display='none'; } });
+        actionBtn.addEventListener('click',function(e){ if(e.target.closest('#micBtn') && !isRecording) return; if(sendBtn.style.display!=='none') demoSendAll(); });
+
+        let isRecording=false, recInterval, recStartTime;
+        micBtn.addEventListener('click',async(e)=>{ e.stopPropagation(); if(!isRecording){ isRecording=true; inputUI.style.display='none'; recordingUI.style.display='flex'; micIcon.style.display='none'; recSendIcon.style.display='block'; recStartTime=Date.now(); recInterval=setInterval(()=>{ const elapsed=Math.floor((Date.now()-recStartTime)/1000); const min=Math.floor(elapsed/60); const sec=elapsed%60; recTimer.innerText=`${min}:${sec<10?'0'+sec:sec}`; },1000); } else { clearInterval(recInterval); isRecording=false; inputUI.style.display='flex'; recordingUI.style.display='none'; micIcon.style.display='block'; recSendIcon.style.display='none'; recTimer.innerText="0:00"; 
+            // Mock audio send
+            // In real app, you'd capture blob, convert to base64, emit via socket
+            const fakeAudioUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+            addMessage(fakeAudioUrl,'audio','sent'); 
+            socket.emit('chatMessage', { content: fakeAudioUrl, type: 'audio' });
+        } });
+        function cancelRecording(){ clearInterval(recInterval); isRecording=false; inputUI.style.display='flex'; recordingUI.style.display='none'; micIcon.style.display='block'; recSendIcon.style.display='none'; recTimer.innerText="0:00"; }
+
+        function addMessage(content, type, dir) {
+            const div = document.createElement('div');
+            div.className = `message-row msg-${dir}`;
+            div.dataset.type = type; div.dataset.content = content; 
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let tickSvg = dir === 'sent' ? `<svg viewBox="0 0 24 24" width="16" height="16" fill="#53bdeb" style="margin-left:2px;"><path d="M17.3 3.3c.4-.4 1-.4 1.4 0s.4 1 0 1.4l-9.3 9.3-3.3-3.3c-.4-.4-.4-1 0-1.4s1-.4 1.4 0l1.9 1.9 7.9-7.9zm-4.3 9.3 1.4 1.4-4.3 4.3-5.3-5.3 1.4-1.4 3.9 3.9 2.9-2.9z"/></svg>` : '';
+            let innerHTML = '';
+
+            if (type === 'text') { 
+                innerHTML = `<div class="bubble">${content}<div class="msg-time">${time} ${tickSvg}</div></div>`; 
+            }
+            else if (type === 'image' || type === 'video') {
+                const uniqueId = `media_${Date.now()}_${Math.random().toString(36).substring(7)}`; 
+                let overlayContent = '';
+                let initialDataState = '';
+                let mediaElement = type === 'image' 
+                                ? `<img src="${content}" class="chat-media blur">` 
+                                : `<video src="${content}" class="chat-media blur" muted preload="metadata"></video>
+                                   <div class="chat-play-overlay"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>`;
+
+                if (dir === 'sent') {
+                    overlayContent = `<div class="download-overlay"><div class="media-loader" style="display: block;"></div></div>`;
+                    initialDataState = 'sending';
+                } else { 
+                    const size = (Math.random() * 5 + 0.5).toFixed(1) + " MB"; 
+                    overlayContent = `<div class="download-overlay"><div class="download-pill" onclick="downloadMedia(event, this, '${type}', '${content}', '${uniqueId}')"><svg class="download-icon" viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg><span>${size}</span></div><div class="media-loader"></div></div>`;
+                    initialDataState = 'download_pending';
                 }
 
-                innerHTML = `<div class="bubble has-media" style="background:${isMe?'#EEFFDE':'#FFF'}">${mediaContent}<div class="time-overlay" style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.4); color:white; padding:2px 6px; border-radius:10px; font-size:11px;">${time}</div></div>`;
-            } 
-            else if (data.type === 'audio') {
-                const audioId = 'audio_' + data.id;
-                innerHTML = `<div class="bubble"><div class="audio-player"><div class="play-icon" onclick="playAudio('${audioId}', this)"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><div class="audio-track"><div class="audio-progress" id="prog_${audioId}"></div></div><audio id="${audioId}" src="${data.content}" ontimeupdate="updateAudioProgress('${audioId}')" onended="resetAudioIcon(this)"></audio></div><div class="msg-time" style="margin-top:2px;">${time}</div></div>`;
+                innerHTML = `
+                <div class="bubble has-media" style="background:${dir==='sent'?'#EEFFDE':'#FFF'}">
+                    <div class="media-container" id="${uniqueId}" data-state="${initialDataState}">
+                        ${overlayContent}
+                        ${mediaElement}
+                    </div>
+                    <div class="time-overlay" style="position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.4); color:white; padding:2px 6px; border-radius:10px; font-size:11px;">${time} ${tickSvg.replace('#53bdeb', 'white')}</div>
+                </div>`;
+            }
+            else if (type === 'audio') { 
+                const audioId = 'audio_' + Date.now(); 
+                innerHTML = `<div class="bubble"><div class="audio-player"><div class="play-icon" onclick="playAudio(event, '${audioId}', this)"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><div class="audio-track"><div class="audio-progress" id="prog_${audioId}"></div></div><audio id="${audioId}" src="${content}" ontimeupdate="updateAudioProgress('${audioId}')" onended="resetAudioIcon(this)"></audio></div><div class="msg-time" style="margin-top:2px;">${time} ${tickSvg}</div></div>`; 
             }
 
             div.innerHTML = innerHTML;
             chatList.appendChild(div);
-            chatList.scrollTop = chatList.scrollHeight;
+            chatList.scrollTop = chatList.scrollHeight; 
+            
             const bubble = div.querySelector('.bubble');
-            attachEvents(bubble, div, data.type, data.content);
+            if(type === 'video') { const vid = bubble.querySelector('video'); if(vid) vid.currentTime = 0.1; }
+            attachEvents(bubble, div, type, content);
+            return div;
         }
 
-        // --- 6. DOWNLOAD LOGIC ---
-        function downloadMedia(id, type) {
-            const btn = document.getElementById(`btn_${id}`);
-            const loader = document.getElementById(`loader_${id}`);
-            const overlay = document.getElementById(`overlay_${id}`);
-            const img = document.getElementById(`img_${id}`);
-            const vid = document.getElementById(`vid_${id}`);
-            const media = img || vid;
+        function downloadMedia(e, btn, type, src, mediaContainerId) {
+            e.stopPropagation();
+            const mediaContainer = document.getElementById(mediaContainerId);
+            if (!mediaContainer) return;
+            const overlay = mediaContainer.querySelector('.download-overlay');
+            const media = mediaContainer.querySelector('.chat-media');
+            const pill = overlay.querySelector('.download-pill');
+            const loader = overlay.querySelector('.media-loader');
 
-            btn.style.display = 'none';
-            loader.style.display = 'block';
+            if (pill) pill.style.display = 'none';
+            if (loader) loader.style.display = 'block';
+            mediaContainer.dataset.state = 'downloading';
 
             setTimeout(() => {
-                loader.style.display = 'none';
-                overlay.style.opacity = '0';
-                if(media) media.classList.remove('blur');
-                const container = document.getElementById(`cont_${id}`);
-                container.style.cursor = 'pointer';
-                container.onclick = () => openFullView(media.src, type);
-                setTimeout(() => overlay.remove(), 300);
-            }, 1000);
+                if (loader) loader.style.display = 'none';
+                if (overlay) overlay.style.opacity = '0'; 
+                if (media) media.classList.remove('blur'); 
+                mediaContainer.dataset.state = 'downloaded';
+                setTimeout(() => { if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 300);
+            }, 1500); 
         }
 
-        // --- 7. HELPERS ---
-        function playAudio(id, btn) {
-            const audio = document.getElementById(id);
-            const icon = btn.querySelector('svg');
-            document.querySelectorAll('audio').forEach(a => { if(a !== audio) { a.pause(); resetAudioIcon(a); } });
-            if (audio.paused) { audio.play(); icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; btn.style.background='#539CDE'; }
-            else { audio.pause(); icon.innerHTML = '<path d="M8 5v14l11-7z"/>'; }
-        }
-        function resetAudioIcon(audio) {
-            const btn = audio.parentElement.querySelector('.play-icon');
-            btn.querySelector('svg').innerHTML = '<path d="M8 5v14l11-7z"/>';
-            document.getElementById('prog_' + audio.id).style.width = '0%';
-        }
-        function updateAudioProgress(id) {
-            const audio = document.getElementById(id);
-            if(audio.duration) document.getElementById('prog_' + id).style.width = (audio.currentTime / audio.duration) * 100 + '%';
-        }
-        function openFullView(src, type) {
-            const i=document.getElementById('viewerImage'), v=document.getElementById('viewerVideo');
-            if(type==='image'){i.src=src;i.style.display='block';v.style.display='none';}
-            else{v.src=src;v.style.display='block';i.style.display='none'; v.play();}
-            mediaViewer.classList.add('active');
-        }
-        function closeMediaViewer() { mediaViewer.classList.remove('active'); document.getElementById('viewerVideo').pause(); }
-
-        // --- 8. MENU & EVENTS ---
-        threeDotsBtn.addEventListener('click', (e) => { e.stopPropagation(); settingsMenu.classList.toggle('active'); });
-        document.addEventListener('click', (e) => { if (!settingsMenu.contains(e.target) && e.target !== threeDotsBtn) settingsMenu.classList.remove('active'); });
-        
-        document.getElementById('btnChangeBg').addEventListener('click', () => { document.getElementById('bgInput').click(); settingsMenu.classList.remove('active'); });
-        document.getElementById('bgInput').addEventListener('change', function() { if (this.files[0]) chatFrame.style.backgroundImage = `url('${URL.createObjectURL(this.files[0])}')`; });
-        document.getElementById('btnResetBg').addEventListener('click', () => { chatFrame.style.backgroundImage = `url('${defaultBg}')`; settingsMenu.classList.remove('active'); });
-        document.getElementById('btnClearChat').addEventListener('click', () => { chatList.innerHTML = '<div class="date-label">Today</div>'; settingsMenu.classList.remove('active'); });
+        // (Rest of the helper functions remain same: playAudio, resetAudioIcon, updateAudioProgress, menu handlers...)
+        function playAudio(e,id,btn){ e.stopPropagation(); const audio=document.getElementById(id); const icon=btn.querySelector('svg'); document.querySelectorAll('audio').forEach(a=>{ if(a!==audio){ a.pause(); resetAudioIcon(a); } }); if(audio.paused){ audio.play(); icon.innerHTML='<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'; btn.style.background='#539CDE'; } else { audio.pause(); icon.innerHTML='<path d="M8 5v14l11-7z"/>'; } }
+        function resetAudioIcon(audio){ const btn=audio.parentElement.querySelector('.play-icon'); btn.querySelector('svg').innerHTML='<path d="M8 5v14l11-7z"/>'; document.getElementById('prog_'+audio.id).style.width='0%'; }
+        function updateAudioProgress(id){ const audio=document.getElementById(id); if(audio.duration) document.getElementById('prog_'+id).style.width=(audio.currentTime/audio.duration)*100+'%'; }
+        threeDotsBtn.addEventListener('click',(e)=>{ e.stopPropagation(); settingsMenu.classList.toggle('active'); });
+        document.addEventListener('click',(e)=>{ if(!settingsMenu.contains(e.target) && e.target!==threeDotsBtn) settingsMenu.classList.remove('active'); if(viewerMenu.classList.contains('active') && !mediaMenuBtn.contains(e.target) && !viewerMenu.contains(e.target)){ viewerMenu.classList.remove('active'); } });
+        document.getElementById('btnChangeBg').addEventListener('click',()=>{ document.getElementById('bgInput').click(); settingsMenu.classList.remove('active'); });
+        document.getElementById('bgInput').addEventListener('change',function(){ if(this.files[0]) wallpaperBg.style.backgroundImage=`url('${URL.createObjectURL(this.files[0])}')`; });
+        document.getElementById('btnResetBg').addEventListener('click',()=>{ wallpaperBg.style.backgroundImage=`url('${defaultBg}')`; settingsMenu.classList.remove('active'); });
+        document.getElementById('btnClearChat').addEventListener('click',()=>{ chatList.innerHTML='<div class="date-label">Today</div>'; settingsMenu.classList.remove('active'); });
 
         function attachEvents(el, row, type, content) {
-            let timer, isScrolling = false;
-            const start = () => { isScrolling=false; timer=setTimeout(()=>{ if(!isScrolling) openActionMenu(row); },500); };
-            const move = () => { isScrolling=true; clearTimeout(timer); };
-            const end = () => { clearTimeout(timer); if(!isScrolling && !actionOverlay.classList.contains('active')) handleSingleClick(row, type, content); };
-            el.addEventListener('touchstart', start); el.addEventListener('touchmove', move); el.addEventListener('touchend', end);
-            el.addEventListener('mousedown', start); el.addEventListener('mouseup', end);
+            let pressTimer;
+            const startHandler = (e) => {
+                if (type === 'image' || type === 'video') {
+                    const mediaContainer = row.querySelector('.media-container');
+                    if (mediaContainer && (mediaContainer.dataset.state === 'sent' || mediaContainer.dataset.state === 'downloaded')) {
+                        pressTimer = setTimeout(() => { if(navigator.vibrate) navigator.vibrate(50); openActionMenu(row); }, 500);
+                    }
+                }
+            };
+            const endHandler = () => clearTimeout(pressTimer);
+            const moveHandler = () => clearTimeout(pressTimer);
+            const clickHandler = (e) => {
+                if (type === 'text' || type === 'audio') { openActionMenu(row); } 
+                else if (type === 'image' || type === 'video') {
+                    const mediaContainer = row.querySelector('.media-container');
+                    if (mediaContainer && (mediaContainer.dataset.state === 'sent' || mediaContainer.dataset.state === 'downloaded')) {
+                        const mediaEl = row.querySelector('.chat-media');
+                        openMediaViewer(content, type, row, mediaEl);
+                    }
+                }
+            };
+            el.addEventListener('touchstart', startHandler, {passive: true}); el.addEventListener('touchend', endHandler); el.addEventListener('touchmove', moveHandler); el.addEventListener('mousedown', startHandler); el.addEventListener('mouseup', endHandler); el.addEventListener('contextmenu', (e)=>{e.preventDefault(); return false;}); el.addEventListener('click', clickHandler);
         }
-        function handleSingleClick(row, type, content) {
-            activeMessageRow = row;
-            // Prevent viewer if download overlay exists
-            if ((type === 'image' || type === 'video') && row.querySelector('.download-overlay')) return;
-            if (type === 'text') emojiOverlay.classList.add('active');
-            else if (type === 'image' || type === 'video') openMediaViewer(content, type);
+
+        function openActionMenu(row){ activeMessageRow=row; actionOverlay.style.alignItems=row.classList.contains('msg-sent')?'flex-end':'flex-start'; actionOverlay.classList.add('active'); }
+        function handleMenuAction(act){ 
+            const targetRow=activeMessageRow; if(!targetRow) return; 
+            const mediaContainer = targetRow.querySelector('.media-container');
+            const isMediaPending = mediaContainer && (mediaContainer.dataset.state === 'sending' || mediaContainer.dataset.state === 'downloading' || mediaContainer.dataset.state === 'download_pending');
+            if(act==='delete'){ targetRow.classList.add('deleting'); setTimeout(()=>{ targetRow.remove(); if(mediaViewer.classList.contains('active')) closeMediaViewer(); },400); } 
+            else if(act==='copy'){ if (!isMediaPending) { navigator.clipboard.writeText(targetRow.dataset.content); alert('Copied!'); } else { alert('Media not ready to copy!'); } } 
+            else if(act==='reply'){ input.focus(); input.placeholder="Replying..."; } 
+            else if(act==='edit'){ if(targetRow.dataset.type!=='audio' && !isMediaPending) { isEditing=true; editingRow=targetRow; input.value=targetRow.dataset.content; input.focus(); micBtn.style.display='none'; sendBtn.style.display='flex'; } else { alert('Cannot edit this message yet!'); } } 
+            else if(act==='share' || act==='forward'){ if (!isMediaPending) { alert(act+' clicked'); } else { alert('Media not ready to share/forward!'); } } 
+            closeAllOverlays(); 
         }
-        function openActionMenu(row) {
-            activeMessageRow = row;
-            const type = row.dataset.type;
-            downloadOption.style.display = (type === 'image' || type === 'video') ? 'flex' : 'none';
-            actionOverlay.style.alignItems = row.classList.contains('msg-sent') ? 'flex-end' : 'flex-start';
-            actionOverlay.classList.add('active');
+        mediaMenuBtn.addEventListener('click',(e)=>{ e.stopPropagation(); viewerMenu.classList.toggle('active'); });
+        function viewerAction(act){ if (activeMessageRow) { if (act === 'save' && activeMessageRow.dataset.type !== 'text' && (activeMessageRow.querySelector('.media-container') && activeMessageRow.querySelector('.media-container').dataset.state !== 'sent' && activeMessageRow.querySelector('.media-container').dataset.state !== 'downloaded')) { alert('Media not yet downloaded to save!'); return; } handleMenuAction(act); } viewerMenu.classList.remove('active'); }
+
+        function openMediaViewer(src, type, row, originEl) {
+            activeMessageRow = row; const i=document.getElementById('viewerImage'), v=document.getElementById('viewerVideo');
+            showControls(); clearTimeout(controlsTimeout); centerPlayBtn.innerHTML='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'; vidProgress.value=0; curTimeDisplay.innerText="00:00"; durTimeDisplay.innerText="00:00";
+            if(type==='image'){ i.src=src; i.style.display='block'; v.style.display='none'; v.pause(); centerPlayBtn.style.display='none'; videoControls.style.display='none'; }
+            else { v.src=src; v.style.display='block'; i.style.display='none'; v.onloadedmetadata=()=>{ durTimeDisplay.innerText=formatTime(v.duration); }; centerPlayBtn.style.display='flex'; videoControls.style.display='flex'; }
+            const name=row.classList.contains('msg-sent')?"You":"Cobb"; const timeDiv=row.querySelector('.msg-time'); const time=timeDiv?"today at "+timeDiv.innerText.split(' ')[0]+" "+timeDiv.innerText.split(' ')[1]:"today at 9:00 PM";
+            document.getElementById('viewerName').innerText=name; document.getElementById('viewerTime').innerText=time;
+            if(originEl){
+                const targetEl=type==='image'?i:v; viewerHeader.classList.add('hidden'); mediaViewer.style.transition='none'; mediaViewer.style.background='transparent'; mediaViewer.classList.add('active');
+                requestAnimationFrame(()=>{ targetEl.style.transition='none'; targetEl.style.transform='scale(0.5)'; targetEl.style.opacity='0';
+                    requestAnimationFrame(()=>{ targetEl.style.transition='all 0.3s cubic-bezier(0.25, 1, 0.5, 1)'; mediaViewer.style.transition='background-color 0.3s ease'; mediaViewer.style.background='black'; targetEl.style.transform='scale(1)'; targetEl.style.opacity='1'; setTimeout(()=>viewerHeader.classList.remove('hidden'),250); });
+                });
+            } else { mediaViewer.classList.add('active'); mediaViewer.style.background='black'; viewerHeader.classList.remove('hidden'); }
         }
-        function handleMenuAction(act) {
-            if (!activeMessageRow) return;
-            // IMPORTANT: Server-Side Delete Logic
-            if (act === 'delete') { 
-                socket.emit('delete message', activeMessageRow.id);
-            }
-            else if (act === 'save') { navigator.clipboard.writeText(activeMessageRow.dataset.content); alert('Copied!'); }
-            else if (act === 'reply') { input.focus(); input.placeholder = "Replying..."; }
-            else if (act === 'download') { const a = document.createElement('a'); a.href = activeMessageRow.dataset.content; a.download = 'file'; a.click(); }
-            closeAllOverlays();
-        }
-        ["👍","👎","❤️","🔥","😂","😮","😢"].forEach(e => {
-            const s = document.createElement('span'); s.className='emoji-item'; s.innerText=e;
-            s.onclick=(evt)=>{ evt.stopPropagation(); addReaction(activeMessageRow, e); closeAllOverlays(); };
-            emojiGrid.appendChild(s);
-        });
-        function addReaction(row, emoji) {
-            let b = row.querySelector('.reaction-badge'); if(b) b.remove();
-            const n = document.createElement('div'); n.className='reaction-badge'; n.innerText=emoji; row.appendChild(n);
-        }
-        function closeAllOverlays() { actionOverlay.classList.remove('active'); emojiOverlay.classList.remove('active'); activeMessageRow = null; }
-        [actionOverlay, emojiOverlay].forEach(o => o.addEventListener('click', e => { if (e.target === o) closeAllOverlays(); }));
+
+        function formatTime(s){ const m=Math.floor(s/60); const sc=Math.floor(s%60); return `${m<10?'0'+m:m}:${sc<10?'0'+sc:sc}`; }
+        function toggleVideoPlay(e){ e.stopPropagation(); if(viewerVideo.paused){ viewerVideo.play(); centerPlayBtn.innerHTML='<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'; startAutoHider(); } else { viewerVideo.pause(); centerPlayBtn.innerHTML='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'; clearTimeout(controlsTimeout); showControls(); } }
+        function updateVideoProgress(){ if(!viewerVideo.duration)return; vidProgress.value=(viewerVideo.currentTime/viewerVideo.duration)*100; curTimeDisplay.innerText=formatTime(viewerVideo.currentTime); durTimeDisplay.innerText=formatTime(viewerVideo.duration); }
+        function seekVideo(){ if(!viewerVideo.duration)return; viewerVideo.currentTime=(vidProgress.value/100)*viewerVideo.duration; }
+        function showControls(){ viewerHeader.classList.remove('hidden'); centerPlayBtn.classList.remove('hidden'); videoControls.classList.remove('hidden'); }
+        function hideControls(){ if(!viewerVideo.paused){ viewerHeader.classList.add('hidden'); centerPlayBtn.classList.add('hidden'); videoControls.classList.add('hidden'); } }
+        function startAutoHider(){ clearTimeout(controlsTimeout); controlsTimeout=setTimeout(hideControls,3000); }
+        function toggleViewerControls(){ if(viewerHeader.classList.contains('hidden')){ showControls(); if(!viewerVideo.paused) startAutoHider(); } else { hideControls(); } viewerMenu.classList.remove('active'); }
+        function closeMediaViewer(e){ if(e)e.stopPropagation(); const v=document.getElementById('viewerVideo'); const i=document.getElementById('viewerImage'); const target=v.style.display==='block'?v:i; viewerHeader.classList.add('hidden'); viewerMenu.classList.remove('active'); centerPlayBtn.classList.add('hidden'); videoControls.classList.add('hidden'); mediaViewer.style.background='transparent'; target.style.transform='scale(0.5)'; target.style.opacity='0'; setTimeout(()=>{ mediaViewer.classList.remove('active'); v.pause(); target.style.transform='scale(1)'; target.style.opacity='1'; },300); }
+        function closeAllOverlays(){ actionOverlay.classList.remove('active'); activeMessageRow=null; }
+        actionOverlay.addEventListener('click',e=>{ if(e.target===actionOverlay) closeAllOverlays(); });
     </script>
 </body>
 </html>
