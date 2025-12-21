@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Payes Telegram Real</title>
+    <title>Payes Demo UI</title>
     <style>
         /* --- 1. SETUP & LAYOUT --- */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -13,15 +12,22 @@
         .mobile-frame { 
             width: 100%; max-width: 450px; height: 100%; 
             background-color: #222; 
-            background-image: url('https://images.unsplash.com/photo-1623164326546-24df97b97637?q=80&w=1000&auto=format&fit=crop'); 
-            background-size: cover; background-position: center; background-repeat: no-repeat;
             display: flex; flex-direction: column; position: relative; 
+            overflow: hidden; 
+        }
+
+        .wallpaper-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://images.pexels.com/photos/15036815/pexels-photo-15036815.jpeg');
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            z-index: 0; pointer-events: none;
         }
 
         /* --- 2. HEADER --- */
         .header {
             background-color: #517DA2; height: 55px; padding: 0 10px; display: flex; align-items: center; gap: 10px;
-            color: white; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2); z-index: 20; position: relative;
+            color: white; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.2); 
+            z-index: 20; position: relative;
         }
         .back-btn { width: 24px; height: 24px; fill: white; cursor: pointer; }
         .profile-pic { width: 38px; height: 38px; border-radius: 50%; background: #333; object-fit: cover; }
@@ -42,52 +48,103 @@
         /* --- 3. CHAT LIST --- */
         .chat-list {
             flex-grow: 1; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px;
-            scroll-behavior: smooth; padding-bottom: 20px;
+            scroll-behavior: smooth; padding-bottom: 20px; z-index: 10;
         }
         .date-label { align-self: center; background: rgba(0,0,0,0.3); color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin: 10px 0; }
 
         /* --- 4. BUBBLES --- */
-        .message-row { display: flex; width: 100%; margin-bottom: 12px; position: relative; animation: msgSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-origin: bottom; transition: all 0.3s ease-out; opacity: 1; flex-shrink: 0; } 
+        .message-row { 
+            display: flex; width: 100%; margin-bottom: 8px; position: relative; 
+            animation: msgSlideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            transform-origin: bottom; flex-shrink: 0;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            max-height: 500px; opacity: 1; transform: scale(1);
+        } 
         @keyframes msgSlideUp { 0% { opacity: 0; transform: translateY(20px) scale(0.95); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        .message-row.deleting { opacity: 0; transform: scale(0.9) translateY(10px); max-height: 0; margin: 0; overflow: hidden; }
+        
         .bubble { max-width: 80%; padding: 6px 10px; border-radius: 8px; font-size: 16px; line-height: 1.3; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); word-wrap: break-word; cursor: pointer; transition: transform 0.1s; }
-        .bubble:active { transform: scale(0.98); }
+        .bubble:active { background-color: rgba(0,0,0,0.05); }
         .bubble.has-media { padding: 3px; border-radius: 8px; background: transparent; }
         
+        /* NEW: Media Wrapper for Download State */
+        .media-container { 
+            position: relative; width: 200px; height: 300px; 
+            border-radius: 6px; overflow: hidden; 
+            display: flex; justify-content: center; align-items: center; 
+        }
+        
+        .chat-media { 
+            width: 100%; height: 100%; object-fit: cover; display: block; 
+            transition: filter 0.3s ease, transform 0.3s ease;
+        }
+        .chat-media.blur { filter: blur(12px); transform: scale(1.1); }
+
+        .download-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            background: rgba(0,0,0,0.2); z-index: 5;
+            transition: opacity 0.3s ease; 
+        }
+        .download-overlay.hidden { opacity: 0; pointer-events: none; }
+        
+        .download-pill {
+            background: rgba(0, 0, 0, 0.6); 
+            backdrop-filter: blur(4px);
+            color: white; 
+            padding: 8px 14px; 
+            border-radius: 20px; 
+            display: flex; align-items: center; gap: 8px; 
+            font-size: 13px; font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            cursor: pointer; transition: transform 0.1s;
+        }
+        .download-pill:active { transform: scale(0.95); }
+        .download-icon { width: 16px; height: 16px; fill: white; }
+        
+        .media-loader {
+            width: 28px; height: 28px; border: 3px solid rgba(255,255,255,0.3); 
+            border-top: 3px solid white; border-radius: 50%;
+            animation: spin 1s linear infinite; display: none; 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         .msg-sent { justify-content: flex-end; }
         .msg-sent .bubble { background-color: #EEFFDE; color: #000; border-bottom-right-radius: 0; }
         .msg-received { justify-content: flex-start; }
         .msg-received .bubble { background-color: #FFFFFF; color: #000; border-bottom-left-radius: 0; }
         .msg-time { float: right; font-size: 11px; color: #559C43; margin-top: 6px; margin-left: 8px; display: flex; align-items: center; gap: 2px; }
         .msg-received .msg-time { color: #a0a0a0; }
-
-        /* MEDIA CONTAINER (Download Logic) */
-        .media-container { position: relative; width: 260px; height: 260px; background: #ddd; border-radius: 6px; overflow: hidden; display: flex; justify-content: center; align-items: center; }
-        .chat-media { width: 100%; height: 100%; object-fit: cover; transition: filter 0.3s; }
-        .chat-media.blur { filter: blur(8px); transform: scale(1.1); }
         
-        .download-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; z-index: 10; transition: opacity 0.3s; }
-        .download-pill { background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); color: white; padding: 8px 16px; border-radius: 20px; display: flex; align-items: center; gap: 8px; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
-        .download-pill:active { transform: scale(0.95); }
-        .media-loader { width: 24px; height: 24px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; display: none; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .reaction-badge { position: absolute; bottom: -12px; z-index: 5; background: white; border: 1px solid #e0e0e0; padding: 2px 5px; border-radius: 10px; font-size: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .msg-sent .reaction-badge { right: 10px; }
+        .msg-received .reaction-badge { left: 10px; }
 
         /* Audio Player */
         .audio-player { display: flex; align-items: center; gap: 10px; width: 230px; padding: 5px 0; }
-        .play-icon { width: 40px; height: 40px; background: #539CDE; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .play-icon { width: 40px; height: 40px; background: #539CDE; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.1s; }
+        .play-icon:active { transform: scale(0.95); }
         .play-icon svg { fill: white; width: 20px; height: 20px; margin-left: 2px; }
         .audio-track { flex-grow: 1; height: 3px; background: rgba(0,0,0,0.1); position: relative; border-radius: 5px; overflow: hidden; }
         .audio-progress { width: 0%; height: 100%; background: #539CDE; border-radius: 5px; transition: width 0.1s linear; }
 
         /* --- 5. FOOTER & PREVIEW --- */
-        .footer-container { background: transparent; display: flex; flex-direction: column; }
-        .preview-scroll-area { display: none; padding: 10px; background: rgba(240, 242, 245, 0.95); border-top: 1px solid rgba(0,0,0,0.1); overflow-x: auto; white-space: nowrap; gap: 10px; backdrop-filter: blur(5px); }
+        .footer-container { background: transparent; display: flex; flex-direction: column; z-index: 20; transition: padding-bottom 0.3s ease; }
+
+        .preview-scroll-area {
+            display: none; padding: 10px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(2px);
+            border-top: 1px solid rgba(255,255,255,0.1); overflow-x: auto; white-space: nowrap; gap: 10px;
+            border-radius: 15px; margin: 0 10px 10px 10px;
+        }
         .preview-item { display: inline-block; position: relative; width: 60px; height: 60px; margin-right: 10px; border-radius: 8px; overflow: hidden; border: 2px solid #517DA2; background: #fff; vertical-align: top; }
         .preview-thumb { width: 100%; height: 100%; object-fit: cover; }
-        .preview-remove { position: absolute; top: 0; right: 0; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 20px; height: 20px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .preview-remove { position: absolute; top: 0; right: 0; background: rgba(0,0,0,0.6); color: #fff; border: none; width: 20px; height: 20px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 2; }
         
         .chat-footer { padding: 5px 8px; display: flex; align-items: flex-end; gap: 8px; min-height: 50px; margin-bottom: 14px; flex-shrink: 0; background: transparent; }
-        .input-container { flex-grow: 1; background: #FFFFFF; border-radius: 22px; display: flex; align-items: flex-end; padding: 8px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .input-container { flex-grow: 1; background: #FFFFFF; border-radius: 22px; display: flex; align-items: flex-end; padding: 8px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: all 0.2s ease; }
         .chat-input { flex-grow: 1; border: none; outline: none; font-size: 17px; max-height: 120px; overflow-y: auto; resize: none; padding: 0 8px; margin-bottom: 2px; font-family: "Roboto", sans-serif; background: transparent; }
+        
         .recording-ui { flex-grow: 1; background: #FFFFFF; border-radius: 22px; display: flex; align-items: center; padding: 12px 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); animation: slideInRight 0.2s; }
         @keyframes slideInRight { from{opacity:0; transform:translateX(20px);} to{opacity:1; transform:translateX(0);} }
         .rec-dot { width: 10px; height: 10px; background-color: #FF3B30; border-radius: 50%; margin-right: 10px; animation: blink 1s infinite; }
@@ -97,7 +154,8 @@
         
         .icon-btn { width: 26px; height: 26px; fill: #89939B; cursor: pointer; flex-shrink: 0; margin-bottom: 1px; }
         .action-btn-wrapper { width: 42px; height: 42px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .mic-btn, .send-btn { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .mic-btn, .send-btn { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: transform 0.1s; }
+        .mic-btn:active, .send-btn:active { transform: scale(0.95); }
         .mic-btn { background: #FFFFFF; } .mic-btn svg { width: 22px; height: 22px; fill: #89939B; }
         .send-btn { background: #539CDE; display: none; } .send-btn svg { width: 20px; height: 20px; fill: #FFFFFF; margin-left: 2px; margin-top: 2px; }
 
@@ -129,7 +187,7 @@
 <body>
 
     <div class="mobile-frame" id="chatFrame">
-        
+        <div class="wallpaper-bg" id="wallpaperBg"></div>
         <div id="loadingOverlay"><div class="media-loader" style="display:block; width:30px; height:30px; margin-bottom:10px;"></div>Sending...</div>
 
         <!-- HEADER -->
@@ -155,12 +213,9 @@
             <div class="date-label">Today</div>
         </div>
 
-        <!-- FOOTER CONTAINER -->
+        <!-- FOOTER -->
         <div class="footer-container">
-            <!-- Hidden Input -->
             <input type="file" id="fileInput" multiple style="display: none;">
-            
-            <!-- PREVIEW AREA -->
             <div class="preview-scroll-area" id="previewArea"></div>
 
             <div class="chat-footer">
@@ -239,12 +294,12 @@
         const emojiGrid = document.getElementById('emojiGrid');
         const downloadOption = document.getElementById('downloadOption');
         let activeMessageRow = null; 
-        const defaultBg = "https://images.unsplash.com/photo-1623164326546-24df97b97637?q=80&w=1000&auto=format&fit=crop";
+        const defaultBg = "https://images.pexels.com/photos/15036815/pexels-photo-15036815.jpeg";
 
         socket.on('connect', () => { document.getElementById('connectionStatus').innerText = "Online"; });
         socket.on('disconnect', () => { document.getElementById('connectionStatus').innerText = "Connecting..."; });
 
-        // --- UTILS: FORMAT BYTES ---
+        // --- UTILS ---
         function formatBytes(bytes, decimals = 0) {
             if (!+bytes) return '0 B';
             const k = 1024;
@@ -260,13 +315,13 @@
                 user: myName,
                 type: type,
                 content: content, // Text or Base64
-                size: fileSize,   // Send size
+                size: fileSize,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
             socket.emit('chat message', msg);
         }
 
-        // --- 2. INPUT HANDLERS ---
+        // --- 2. INPUT ---
         input.addEventListener('input', function() {
             this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';
             if (this.value.trim().length > 0) { micBtn.style.display = 'none'; sendBtn.style.display = 'flex'; }
@@ -307,7 +362,6 @@
                 selectedFiles.forEach((file, index) => {
                     const item = document.createElement('div');
                     item.className = 'preview-item';
-                    
                     if (file.type.startsWith('image/')) {
                         const img = document.createElement('img');
                         img.src = URL.createObjectURL(file);
@@ -332,22 +386,17 @@
             }
         }
 
-        // New Logic to Handle Multiple Files Sending
+        // Send All Logic
         sendBtn.addEventListener('click', async function(e) {
-            // Check if we are sending text (already handled by actionBtn click if input has text)
-            // But if text is empty and files are present, this handles it.
+            // Text is handled by actionBtn if present, but files are handled here if input is empty
             if (input.value.trim().length === 0 && selectedFiles.length > 0) {
                 loadingOverlay.style.display = 'flex';
-                
                 for (const file of selectedFiles) {
                     await readFileAndSend(file);
                 }
-                
                 selectedFiles = [];
                 renderPreviews();
                 loadingOverlay.style.display = 'none';
-                
-                // Reset buttons
                 micBtn.style.display = 'flex';
                 sendBtn.style.display = 'none';
             }
@@ -430,6 +479,16 @@
         socket.on('chat message', (data) => {
             addMessage(data);
         });
+        
+        socket.on('message deleted', (id) => {
+            const el = document.getElementById(id);
+            if(el) {
+                el.style.transition = 'all 0.3s';
+                el.style.opacity = '0';
+                el.style.transform = 'scale(0.8)';
+                setTimeout(() => el.remove(), 300);
+            }
+        });
 
         function addMessage(data) {
             if(document.getElementById(data.id)) return;
@@ -439,7 +498,6 @@
             div.className = `message-row ${isMe ? 'msg-sent' : 'msg-received'}`;
             div.dataset.type = data.type; div.dataset.content = data.content; 
 
-            // Only time, no ticks
             const time = data.time;
             
             let innerHTML = '';
@@ -448,20 +506,15 @@
             } 
             else if (data.type === 'image' || data.type === 'video') {
                 const uniqueId = `media_${data.id}`;
-                
-                // Content for sender: Direct view
-                // Content for receiver: Blurred + Download Button
                 let mediaContent = '';
                 
                 if (isMe) {
-                    // Sender sees it clearly immediately
                     if (data.type === 'image') {
                         mediaContent = `<img src="${data.content}" class="chat-media" onclick="openFullView(this.src, 'image')">`;
                     } else {
                         mediaContent = `<video src="${data.content}" class="chat-media" onclick="openFullView('${data.content}', 'video')"></video>`;
                     }
                 } else {
-                    // Receiver sees download UI
                     const mediaTag = data.type === 'image' ? 
                         `<img src="${data.content}" class="chat-media blur" id="img_${uniqueId}">` : 
                         `<video src="${data.content}" class="chat-media blur" id="vid_${uniqueId}"></video>`;
@@ -503,27 +556,18 @@
             const vid = document.getElementById(`vid_${id}`);
             const media = img || vid;
 
-            // UI State: Downloading
             btn.style.display = 'none';
             loader.style.display = 'block';
 
-            // Simulate Network Delay (1.5s)
             setTimeout(() => {
                 loader.style.display = 'none';
                 overlay.style.opacity = '0';
-                
-                // Remove Blur
                 if(media) media.classList.remove('blur');
-
-                // Allow Full Screen Click now
                 const container = document.getElementById(`cont_${id}`);
                 container.style.cursor = 'pointer';
                 container.onclick = () => openFullView(media.src, type);
-                
-                // Cleanup overlay DOM
                 setTimeout(() => overlay.remove(), 300);
-
-            }, 1500);
+            }, 1000);
         }
 
         // --- 7. HELPERS ---
@@ -551,9 +595,10 @@
         }
         function closeMediaViewer() { mediaViewer.classList.remove('active'); document.getElementById('viewerVideo').pause(); }
 
-        // --- MENU ---
+        // --- 8. MENU & EVENTS ---
         threeDotsBtn.addEventListener('click', (e) => { e.stopPropagation(); settingsMenu.classList.toggle('active'); });
         document.addEventListener('click', (e) => { if (!settingsMenu.contains(e.target) && e.target !== threeDotsBtn) settingsMenu.classList.remove('active'); });
+        
         document.getElementById('btnChangeBg').addEventListener('click', () => { document.getElementById('bgInput').click(); settingsMenu.classList.remove('active'); });
         document.getElementById('bgInput').addEventListener('change', function() { if (this.files[0]) chatFrame.style.backgroundImage = `url('${URL.createObjectURL(this.files[0])}')`; });
         document.getElementById('btnResetBg').addEventListener('click', () => { chatFrame.style.backgroundImage = `url('${defaultBg}')`; settingsMenu.classList.remove('active'); });
@@ -569,9 +614,8 @@
         }
         function handleSingleClick(row, type, content) {
             activeMessageRow = row;
-            // Prevent opening viewer if media is not downloaded yet (has overlay)
+            // Prevent viewer if download overlay exists
             if ((type === 'image' || type === 'video') && row.querySelector('.download-overlay')) return;
-
             if (type === 'text') emojiOverlay.classList.add('active');
             else if (type === 'image' || type === 'video') openMediaViewer(content, type);
         }
@@ -584,7 +628,10 @@
         }
         function handleMenuAction(act) {
             if (!activeMessageRow) return;
-            if (act === 'delete') { activeMessageRow.classList.add('deleting'); setTimeout(() => activeMessageRow.remove(), 300); }
+            // IMPORTANT: Server-Side Delete Logic
+            if (act === 'delete') { 
+                socket.emit('delete message', activeMessageRow.id);
+            }
             else if (act === 'save') { navigator.clipboard.writeText(activeMessageRow.dataset.content); alert('Copied!'); }
             else if (act === 'reply') { input.focus(); input.placeholder = "Replying..."; }
             else if (act === 'download') { const a = document.createElement('a'); a.href = activeMessageRow.dataset.content; a.download = 'file'; a.click(); }
